@@ -1,0 +1,199 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using AnotherRTSP.Classes;
+using AnotherRTSP.Forms;
+using uPLibrary.Networking.M2Mqtt;
+
+namespace AnotherRTSP
+{
+    public partial class SettingsForm : Form
+    {
+        //private Form logfrm = new LogForm();
+        public SettingsForm()
+        {
+            InitializeComponent();
+            
+        }
+
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+            loadSettings();
+        }
+
+        private void SettingsForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+         
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Logger.WriteLog("testing...");
+        }
+
+        private void setSettings()
+        {
+            // mqtt section
+            Settings.MqttEnabled = mqttsupport_checkbox.Checked ? 1 : 0;
+            if (servertextbox.Text != "")
+                    Settings.MqttSettings.Server = servertextbox.Text;
+            if (porttextbox.Text != "")
+                Settings.MqttSettings.Port = int.Parse(porttextbox.Text);
+            if (usernametextbox.Text != "")
+                Settings.MqttSettings.Username = usernametextbox.Text;
+            if (passwordtextbox.Text != "")
+                Settings.MqttSettings.Password = passwordtextbox.Text;
+            if (clientidtextbox.Text != "")
+                Settings.MqttSettings.ClientID = clientidtextbox.Text;
+
+            // cameras section
+            Dictionary<string, Camera> Cams = new Dictionary<string, Camera>();
+            foreach (ListViewItem listItem in camerasListView1.Items)
+            {
+                Camera newCamera = new Camera();
+                newCamera.Name = listItem.Text;
+                newCamera.Url = listItem.SubItems[1].Text;
+                Cams.Add(listItem.Text, newCamera);
+            }
+            Settings.OverrideCamsList(Cams);
+            // advanced tab
+            Settings.Advanced.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
+            Settings.Advanced.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
+        }
+
+        private void loadSettings()
+        {
+            mqttsupport_checkbox.Checked = Settings.MqttEnabled == 1;
+            servertextbox.Text = Settings.MqttSettings.Server;
+            porttextbox.Text = Settings.MqttSettings.Port.ToString();
+            usernametextbox.Text = Settings.MqttSettings.Username;
+            passwordtextbox.Text = Settings.MqttSettings.Password;
+            clientidtextbox.Text = Settings.MqttSettings.ClientID;
+
+            // load cameras
+            foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            {
+                ListViewItem item = new ListViewItem(new[] { cam.Key, cam.Value.Url });
+                camerasListView1.Items.Add(item);
+            }
+            // advanced tab
+            checkBoxLedsOnTop.Checked = Settings.Advanced.LedsWindowOnTop;
+            checkBoxLedsAlertSounds.Checked = Settings.Advanced.LedsSoundAlert;
+        }
+        /*
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            //Form logfrm = new LogForm();
+            if (checkBox1.Checked)
+            {
+                // Show the form if the CheckBox is checked
+                Settings.ShowOrActivateForm<LogForm>();
+            }
+            else
+            {
+                // Hide the form if the CheckBox is not checked
+                Settings.DeactivateForm<LogForm>();
+            }
+        }
+         */
+
+        private void okbtn_Click(object sender, EventArgs e)
+        {
+            setSettings();
+            this.Close();
+        }
+
+        private void applybtn_Click(object sender, EventArgs e)
+        {
+            setSettings();
+        }
+
+        private void cancelbtn_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void mqtttest_Click(object sender, EventArgs e)
+        {
+            // test mqtt connectivity
+            var clientid = clientidtextbox.Text ?? "AnotherRTSP";
+            MqttClient client = new MqttClient(servertextbox.Text);
+            try
+            {
+                var status = client.Connect(clientid);
+                if (status == 0)
+                {
+                    MessageBox.Show("Connected!");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to connect!");
+            }
+           
+            
+        }
+
+        private void mqttalertsbtn_Click(object sender, EventArgs e)
+        {
+            MqttRulesForm mqttrls = new MqttRulesForm();
+            mqttrls.Show();
+        }
+
+        private void camerasListView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (camerasListView1.SelectedItems.Count > 0)
+            {
+                var item = camerasListView1.SelectedItems[0];
+                cameraNameEditBox.Text = item.SubItems[0].Text;
+                cameraSourceEditBox.Text = item.SubItems[1].Text;
+                selectedCameraLabel.Text = item.Index.ToString();
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            selectedCameraLabel.Text = "-1";
+            cameraSourceEditBox.Text = "";
+            cameraNameEditBox.Text = "";
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            int index = int.Parse(selectedCameraLabel.Text);
+
+            if (index >= 0)
+            {
+                // update
+                camerasListView1.Items[index].SubItems[0].Text = cameraNameEditBox.Text;
+                camerasListView1.Items[index].SubItems[1].Text = cameraSourceEditBox.Text;
+            }
+            if (index == -1)
+            {
+                // insert new
+                if (cameraSourceEditBox.Text != "" && cameraNameEditBox.Text != "")
+                {
+                    ListViewItem item = new ListViewItem(new[] { cameraNameEditBox.Text, cameraSourceEditBox.Text });
+                    camerasListView1.Items.Add(item);
+                }
+                else
+                {
+                    MessageBox.Show("Not all fields are filled!");
+                }
+            }
+        }
+
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in camerasListView1.SelectedItems)
+            {
+                camerasListView1.Items.Remove(item);
+            }
+        }
+    }
+}
