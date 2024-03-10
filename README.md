@@ -9,7 +9,7 @@ But here's the best part – AnotherRTSP isn't just another closed-door solution
 Experience the future of surveillance and productivity fusion with AnotherRTSP – where monitoring meets seamless work harmony!"
 
 
-<img src="https://raw.githubusercontent.com/e1z0/AnotherRTSP/master/images/win11-with-mqttrules.jpeg" width="800" />
+<img src="https://raw.githubusercontent.com/e1z0/AnotherRTSP/master/pictures/win11-with-mqttrules.jpeg" width="800" />
 
 [More screenshots](../../wiki/Screenshots)
 
@@ -42,7 +42,7 @@ I use such video surveillance tools as BlueIris and Frigate, so I didn't forget 
 
 # Operating System support
 
-* Windows XP (see the topic below)
+* Windows XP (see the [wiki topic](../../wiki/Windows-XP-Support))
 * Windows Vista
 * Windows 7
 * Windows 8
@@ -50,16 +50,8 @@ I use such video surveillance tools as BlueIris and Frigate, so I didn't forget 
 * Windows 10
 * Windows 11
 
-# Windows XP Compatibility Support
-
-* Install Microsoft Visual C++ 2008 Redistributable package https://www.microsoft.com/en-US/download/details.aspx?id=26368
-* Install Microsoft Visual C++ 2010 Redistributable package https://www.microsoft.com/en-gb/download/details.aspx?id=26999
-* Install One Core API https://github.com/Skulltrail192/One-Core-API-Binaries
-* Install .NET Framework 4.0 client package https://www.microsoft.com/en-in/download/details.aspx?id=17718 or https://archive.org/details/microsoftnet.framework4.0
-* You are ready to run!
-
 # Third party Components used
 
-EasyPlayerRTSP Libraries https://github.com/tsingsee/EasyPlayer-RTSP-Win
-Paho MQTT m2mqtt 4.3.0.0 (2017.05.20)
-Tiny-JSON v1.2.0 https://github.com/gering/Tiny-JSON
+* EasyPlayerRTSP Libraries https://github.com/tsingsee/EasyPlayer-RTSP-Win
+* Paho MQTT m2mqtt 4.3.0.0 (2017.05.20)
+* Tiny-JSON v1.2.0 https://github.com/gering/Tiny-JSON
