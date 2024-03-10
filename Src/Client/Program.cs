@@ -62,15 +62,37 @@ namespace AnotherRTSP
             }
             
         }
+
+        static void TerminateAllThreads()
+        {
+            // Get the current process
+            System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+
+            // Get all threads except the main thread
+            foreach (System.Diagnostics.ProcessThread thread in currentProcess.Threads)
+            {
+                if (thread.Id != Thread.CurrentThread.ManagedThreadId)
+                {
+                    // Terminate the thread
+                    thread.Dispose();
+                }
+            }
+        }
         // bind application exit event and stop all threads on event
         static void Application_ApplicationExit(object sender, EventArgs e)
         {
                 Settings.MqttServiceRunning = false;
                 Settings.LogWindowRunning = false;
                 Settings.Save();
-                Thread.Sleep(5000);
+                // wait for all threads to terminate
+                Thread.Sleep(500);
                 Logger.WriteLog("Program gracefully closed!");
-                Environment.Exit(Environment.ExitCode);
+                // forcefully terminate threads if remaining
+                TerminateAllThreads();
+                // clean exit
+                Application.Exit();
+                // if application is still active, then terminate it
+                Environment.Exit(0);
 
         }
     }

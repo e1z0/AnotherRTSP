@@ -44,7 +44,7 @@ namespace AnotherRTSP
                 {
                     result.Add(entry.Substring(0, entry.IndexOf("=")));
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }
@@ -73,7 +73,7 @@ namespace AnotherRTSP
             {
                 return RetVal.ToString();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return DefaultVal;
             }
@@ -91,7 +91,7 @@ namespace AnotherRTSP
             {
                 return int.Parse(RetVal.ToString());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return DefaultVal;
             }
@@ -119,7 +119,7 @@ namespace AnotherRTSP
             {
                 Write(null, null, Section ?? EXE);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }

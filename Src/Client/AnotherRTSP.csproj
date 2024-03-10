@@ -70,7 +70,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
@@ -182,6 +181,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon_32.ico" />
+    <EmbeddedResource Include="Images\camera_64.ico" />
+    <EmbeddedResource Include="Images\leds_256.ico" />
     <EmbeddedResource Include="Images\led-lamp-red-off_32.png" />
     <EmbeddedResource Include="Images\led-lamp-red-on_32.png" />
     <EmbeddedResource Include="Images\icon_32.ico" />

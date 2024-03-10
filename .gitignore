@@ -50,7 +50,8 @@ xpdep
 xpbuild
 temp
 pics
-mqtt_test
+mqtt_pub
+mqtt_sub
 Src/libEasyPlayer/.vs/
 Bin
 Src/bin
@@ -64,3 +65,6 @@ Src/Client/bin
 Src/Client/obj
 Src/EasyPlayerNetSDK/bin
 Src/EasyPlayerNetSDK/obj
+dist
+Src/.vs
+todo.md

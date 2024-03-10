@@ -49,7 +49,11 @@ namespace AnotherRTSP
     public class AdvancedSettings
     {
         public bool LedsWindowOnTop { get; set; }
-        public bool LedsSoundAlert { get; set; } 
+        public bool LedsSoundAlert { get; set; }
+        public bool FocusAllWindowsOnClick { get; set; }
+        public bool StaticCameraCaption { get; set; }
+        public bool DisableCameraCaptions { get; set; }
+        public bool AllCamerasWindowsOnTop { get; set; }
     } 
 
     public static class Settings
@@ -116,6 +120,14 @@ namespace AnotherRTSP
             // Led window
             ini.WriteInt("LedWindowX", LedWindowX, "General");
             ini.WriteInt("LedWindowY", LedWindowY, "General");
+
+            // Advanced settings
+            ini.WriteInt("LedsWindowOnTop", Advanced.LedsWindowOnTop ? 1 : 0,"Advanced");
+            ini.WriteInt("LedsSoundAlert", Advanced.LedsSoundAlert ? 1 : 0, "Advanced");
+            ini.WriteInt("FocusAllWindowsOnClick", Advanced.FocusAllWindowsOnClick ? 1 : 0, "Advanced");
+            ini.WriteInt("StaticCameraCaption", Advanced.StaticCameraCaption ? 1 : 0, "Advanced");
+            ini.WriteInt("DisableCameraCaptions", Advanced.DisableCameraCaptions ? 1 : 0, "Advanced");
+            ini.WriteInt("AllCamerasWindowsOnTop", Advanced.AllCamerasWindowsOnTop ? 1 : 0, "Advanced");
 
             // save mqtt settings
             if (MqttEnabled > 0)
@@ -295,17 +307,22 @@ namespace AnotherRTSP
             }
             catch (Exception ex)
             {
-                // nowhere to put the output :D
+                Logger.WriteLog("Exception [function Load(): general settings]: {0}", ex.ToString());
             }
             // advanced settings
             try
             {
                 Advanced.LedsWindowOnTop = (ini.ReadIntDefault("LedsWindowOnTop", 0, "Advanced") != 0);
                 Advanced.LedsSoundAlert = (ini.ReadIntDefault("LedsSoundAlert", 0, "Advanced") != 0);
+                Advanced.FocusAllWindowsOnClick = (ini.ReadIntDefault("FocusAllWindowsOnClick", 0, "Advanced") != 0);
+                Advanced.StaticCameraCaption = (ini.ReadIntDefault("StaticCameraCaption", 0, "Advanced") != 0);
+                Advanced.DisableCameraCaptions = (ini.ReadIntDefault("DisableCameraCaptions", 0, "Advanced") != 0);
+                Advanced.AllCamerasWindowsOnTop = (ini.ReadIntDefault("AllCamerasWindowsOnTop", 0, "Advanced") != 0);
             }
             catch (Exception ex)
             {
                 // nowhere to put the output :D
+                Logger.WriteLog("Exception [function Load(): advanced settings]: {0}", ex.ToString());
             }
 #if DEBUG
             Logging = 1;

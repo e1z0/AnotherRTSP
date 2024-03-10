@@ -23,9 +23,9 @@ namespace AnotherRTSP.Components
             Message.Text = message;
         }
 
-        public static Toast show(String message)
+        public static Toast showToast(String message, int delay = 2500)
         {
-            return show(message, DEFAULT_MS_DELAY);
+            return show(message, delay);
         }
 
         public static Toast show(String message, int ms)
