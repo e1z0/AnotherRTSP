@@ -15,12 +15,19 @@ namespace AnotherRTSP.Classes
             if (Settings.Logging > 0)
             {
                 // Open the log file for appending.
-                using (StreamWriter writer = new StreamWriter(Settings.LogPath, true))
+                try
                 {
-                    string TimeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                    // Write the log message to the file.
-                    string formattedString = String.Format(message, args);
-                    writer.WriteLine(TimeStamp+" -> "+formattedString);
+                    using (StreamWriter writer = new StreamWriter(Settings.LogPath, true))
+                    {
+                        string TimeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        // Write the log message to the file.
+                        string formattedString = String.Format(message, args);
+                        writer.WriteLine(TimeStamp + " -> " + formattedString);
+                    }
+                }
+                catch (Exception)
+                {
+
                 }
             }
         }

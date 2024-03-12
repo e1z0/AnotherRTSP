@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using AnotherRTSP.Classes;
 
 /*
  * 
@@ -252,7 +253,7 @@ namespace AnotherRTSP
             int i = 0;
             if (Settings.Cameras != null && Settings.Cameras.Count > 0)
             {
-                foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+                foreach (Camera cam in Settings.Cameras)
                 {
                     //MessageBox.Show("cam: "+cam.Key+" url: "+cam.Value, "cam");
                     panels[i] = new Panel();
@@ -263,7 +264,7 @@ namespace AnotherRTSP
                     panels[i].ContextMenuStrip = contextMenuStrip1;
                     panels[i].DoubleClick += new EventHandler(videoPanel_DoubleClick);
                     panels[i].Tag = i;
-                    Chans[i] = PlayerSdk.EasyPlayer_OpenStream(cam.Value.Url, panels[i].Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
+                    Chans[i] = PlayerSdk.EasyPlayer_OpenStream(cam.Url, panels[i].Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
                     if (Chans[i] > 0)
                     {
                         PlayerSdk.EasyPlayer_SetFrameCache(Chans[i], streamCache);

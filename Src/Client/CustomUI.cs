@@ -23,38 +23,19 @@ namespace AnotherRTSP
 {
     public class CustomUI
     {
-        // Win32 api to move/resize window
-        [DllImport("user32.dll")]
-        private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-
-
-
-        private PlayerSdk.MediaSourceCallBack callBack = null;
+        // if player SDK is initialized
         private bool isInit = false;
-        private int channelID = -1;
-        private bool isTCP = false;
-        private bool isHardEncode = false;
-        private PlayerSdk.RENDER_FORMAT RENDER_FORMAT = PlayerSdk.RENDER_FORMAT.DISPLAY_FORMAT_RGB24_GDI;
-        private Form[] forms = new Form[10];
-        private int[] Chans = new int[10];
-        private int focusedVideo = -1;
-        private bool videoFullScreen = false;
-        private int streamCache = 3;
 
         // window resize and move variables
-        private int movX, movY;
-        private bool isMoving;
-
-        // for show tooltips on camera windows
-        private int mouseEnterCount = 0;
+        private static int movX, movY;
+        private static bool isMoving;
 
         // tray icon
         private NotifyIcon trayIcon;
-
-        private void SpawnCamera()
-        {
-
-        }
+        // program context menus
+        public static ContextMenuStrip MainContextMenu = new ContextMenuStrip();
+        public static List<ToolStripMenuItem> CamerasMenu = new List<ToolStripMenuItem>();
+        public static ToolStripMenuItem logmenuItem = new ToolStripMenuItem();
 
         // application exit event
         private void AppExit()
@@ -62,17 +43,27 @@ namespace AnotherRTSP
             if (isInit)
             {
                 // close all open streams
-                foreach (int chan in Chans) {
-                PlayerSdk.EasyPlayer_CloseStream(chan);
+                foreach (Camera camera in Settings.Cameras) 
+                {
+                    if (!camera.Disabled)
+                        camera.CloseCamera();
                 }
                 
             }
-            if (trayIcon != null)
-                trayIcon.Dispose();
+            try
+            {
+                if (trayIcon != null)
+                    trayIcon.Dispose();
+                PlayerSdk.EasyPlayer_Release();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog("Error at AppExit() {0}", ex.StackTrace.ToString());
+            }
             Application.Exit();
         }
 
-        private void About()
+        public static void About()
         {
             MessageBox.Show(string.Format("AnotherRTSP v{0}. Copyright (c) 2024 e1z0. All Rights Reserved\nLicensed under MIT License.", Settings.VERSION), "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -80,19 +71,15 @@ namespace AnotherRTSP
         private void MenuItem_Click(object sender, EventArgs e)
         {
             // Get the selected menu item.
-            MenuItem menuItem = (MenuItem)sender;
+            ToolStripMenuItem menuItem = (ToolStripMenuItem)sender;
 
             // Perform the appropriate action based on the selected menu item.
             switch (menuItem.Text)
             {
-                case "Log":
-                    Settings.ShowOrActivateForm<LogForm>();
-                    break;
                 case "Settings":
                     Settings.ShowOrActivateForm<SettingsForm>();
                     break;
                 case "About":
-                    // Copy the selected text to the clipboard.
                     About();
                     break;
                 case "Exit":
@@ -102,72 +89,81 @@ namespace AnotherRTSP
             }
         }
 
-        private ContextMenu InitializeContextMenu()
+        public ContextMenuStrip InitializeContextMenu()
         {
             // Create a new context menu.
-            ContextMenu cnt = new ContextMenu();
+            ContextMenuStrip cnt = new ContextMenuStrip();
 
             // Add a new menu item to the context menu.
-            MenuItem menuItem = new MenuItem();
+            ToolStripMenuItem menuItem = new ToolStripMenuItem();
             menuItem.Text = "About";
             menuItem.Click += new EventHandler(MenuItem_Click);
-            cnt.MenuItems.Add(menuItem);
-
+            cnt.Items.Add(menuItem);
 
             // Add another menu item to the context menu.
-            menuItem = new MenuItem();
+            menuItem = new ToolStripMenuItem();
             menuItem.Text = "Settings";
             menuItem.Click += new EventHandler(MenuItem_Click);
-            cnt.MenuItems.Add(menuItem);
+            cnt.Items.Add(menuItem);
+
+            // Add log menu item to the context menu.
+            logmenuItem.Text = "Log";
+            logmenuItem.Checked = Settings.LogWindowRunning;
+            logmenuItem.Click += (sender, e) =>
+            {
+                ToolStripMenuItem obj = sender as ToolStripMenuItem;
+                if (obj != null)
+                {
+                    if (obj.Checked)
+                    {
+                        Settings.DeactivateForm<LogForm>();
+                    }
+                    else
+                    {
+                        Settings.ShowOrActivateForm<LogForm>();
+                    }
+                }
+            };
+            cnt.Items.Add(logmenuItem);
 
             // Add another menu item to the context menu.
-            menuItem = new MenuItem();
-            menuItem.Text = "Log";
-            menuItem.Click += new EventHandler(MenuItem_Click);
-            cnt.MenuItems.Add(menuItem);
-
-            // Add another menu item to the context menu.
-            menuItem = new MenuItem();
+            menuItem = new ToolStripMenuItem();
             menuItem.Text = "Exit";
             menuItem.Click += new EventHandler(MenuItem_Click);
-            cnt.MenuItems.Add(menuItem);
+            cnt.Items.Add(menuItem);
             return cnt;
         }
 
-        public void FormsKeyDown(object sender, KeyEventArgs e)
+    
+
+        public static void FormsKeyDown(object sender, KeyEventArgs e)
         {
             Form frm = sender as Form;
 
             if (e.KeyCode == Keys.Up)
             {
-                frm.Height -= 1;
+                frm.Height -= Settings.Advanced.ResizeWindowBy;
             }
             else if (e.KeyCode == Keys.Down)
             {
-                frm.Height += 1;
+                frm.Height += Settings.Advanced.ResizeWindowBy;
             }
             else if (e.KeyCode == Keys.Left)
             {
-                frm.Width -= 1;
+                frm.Width -= Settings.Advanced.ResizeWindowBy;
             }
             else if (e.KeyCode == Keys.Right)
             {
-                frm.Width += 1;
+                frm.Width += Settings.Advanced.ResizeWindowBy;
             }
         }
 
-        private void FormsGotFocus(object sender, EventArgs e)
+        public static void FormsGotFocus(object sender, EventArgs e)
         {
-            Form frm = sender as Form;
-            int id = (int)frm.Tag;
-            if (id >= 0)
-            {
-                focusedVideo = id;
-                channelID = Chans[id];
-            }
+
         }
 
-        private void FormsMouseDown(object sender, MouseEventArgs e)
+        public static void FormsMouseDown(object sender, MouseEventArgs e)
         {
             // Assign this method to mouse_Down event of Form or Panel,whatever you want
             if (Control.MouseButtons == MouseButtons.Left)
@@ -180,7 +176,7 @@ namespace AnotherRTSP
                 isMoving = false;
         }
 
-        private void FormsMouseMove(object sender, MouseEventArgs e)
+        public static void FormsMouseMove(object sender, MouseEventArgs e)
         {
             if (isMoving)
             {
@@ -203,7 +199,7 @@ namespace AnotherRTSP
             }
         }
 
-        private void FormsMouseUp(object sender, MouseEventArgs e)
+        public static void FormsMouseUp(object sender, MouseEventArgs e)
         {
             // Assign this method to Mouse_Up event of Form or Panel.
             if (e.Button == MouseButtons.Left)
@@ -213,37 +209,7 @@ namespace AnotherRTSP
         }
 
 
-        public void LabelFadeOut(Label label, Form parent, int timeout = 2000)
-        {
-            
-            if (label.Visible)
-            {
 
-                Timer fadeTimer = new Timer();
-                fadeTimer.Interval = 1; // Adjust as needed for the desired fade speed
-                int fade = 0;
-                int r = 255, g = 255, b = 255;
-                fadeTimer.Tick += (sender, e) =>
-                {
-                    fade++;
-                    if (fade >= 200) // arbitrary duration set prior to initiating fade
-                    {
-                        if (r > 0) r--; // increase r value with each tick
-                        if (g > 0) g--; // decrease g value with each tick
-                        if (b > 0) b--; // decrease b value with each tick
-                        label.ForeColor = Color.FromArgb(0, r, g, b);
-                        if (r == 0 && g == 0 && b == 0) // arrived at target values
-                        {
-                            fade = 0;
-                            label.Visible = false;
-                            label.Tag = "";
-                            fadeTimer.Stop();
-                        }
-                    }
-                };
-                fadeTimer.Start();
-            }
-        }
 
         private void InitializeTrayIcon()
         {
@@ -260,21 +226,41 @@ namespace AnotherRTSP
             // Set tooltip text
             trayIcon.Text = "AnotherRTSP";
             // Add a context menu
-            ContextMenuStrip contextMenu = new ContextMenuStrip();
-            /*
-            contextMenu.Items.Add("Test").Click += (sender, e) =>
+            trayIcon.Click += (sender, e) =>
             {
-                MessageBox.Show("test");
+                   var mouseArgs = e as MouseEventArgs;
+                   // left mouse button click activates all windows
+                   if (mouseArgs.Button == MouseButtons.Left)
+                   {
+                       }
+                       if (Settings.Advanced.FocusAllWindowsOnClick)
+                       {
+                           // Get all open forms and bring each one to the front
+                           foreach (Form form in Application.OpenForms)
+                           {
+                               Win32Func.SetForegroundWindow(form.Handle);
+                           }
+                       }
+                   
             };
-             */ 
-            contextMenu.Items.Add("Settings").Click += (sender, e) => Settings.ShowOrActivateForm<SettingsForm>();
-            contextMenu.Items.Add("Log Window").Click += (sender, e) => Settings.ShowOrActivateForm<LogForm>();
-            contextMenu.Items.Add("About").Click += (sender, e) => About();
-            contextMenu.Items.Add("Exit").Click += (sender, e) => AppExit();
-            trayIcon.ContextMenuStrip = contextMenu;
             // Make the tray icon visible
             trayIcon.Visible = true;
             //trayIcon.ShowBalloonTip(3000, "Welcome", "AnotherRTSP Launched!", ToolTipIcon.Info);
+        }
+
+        public static void UncheckMenuItems(string itemName)
+        {
+            foreach (Camera camera in Settings.Cameras)
+            {
+                foreach (ToolStripMenuItem toolStripMenuItem in camera.camMenuItem.DropDownItems)
+                {
+                    if (toolStripMenuItem.Text == itemName)
+                    {
+                        toolStripMenuItem.Checked = false;
+                    }
+
+                }
+            }
         }
 
         public void Init()
@@ -285,132 +271,24 @@ namespace AnotherRTSP
                 isInit = true;
             if (!isInit)
                 Logger.WriteLog("Unable to initialize Player SDK!");
-            callBack = new PlayerSdk.MediaSourceCallBack(MediaCallback);
-            isTCP = true;
-            isHardEncode = false;
-
+            // load tray icon
             InitializeTrayIcon();
+            MainContextMenu = InitializeContextMenu();
 
-            // counter
-            int i = 0;
-            foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            // initialize cameras
+            foreach (Camera camera in Settings.Cameras)
             {
-                cam.Value.Id = i;
-                forms[i] = new Form();
-                var mnu = InitializeContextMenu();
-                // Load icon from embedded resource
-                Icon icon;
-                using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AnotherRTSP.Images.camera_64.ico"))
-                {
-                    icon = new Icon(iconStream);
-                }
-                forms[i].Icon = icon;
-                forms[i].ContextMenu = mnu;
-                forms[i].ShowInTaskbar = false;
-                forms[i].BackColor = Color.Black;
-                forms[i].FormBorderStyle = FormBorderStyle.None;
-                if (Settings.Advanced.AllCamerasWindowsOnTop)
-                    forms[i].TopMost = true;
+                camera.contextMenu = MainContextMenu;
+                CamerasMenu.Add(camera.ReturnMenuItem());
+                camera.SpawnCameraWindow();
                 
-
-                forms[i].Click += (sender, e) =>
-                {
-                    if (Settings.Advanced.FocusAllWindowsOnClick)
-                    {
-                        // Get all open forms and bring each one to the front
-                        foreach (Form form in Application.OpenForms)
-                        {
-                            form.Focus();
-                        }
-                    }
-                };
-
-                forms[i].FormClosing += (sender, e) =>
-                {
-                    Form frm = sender as Form;
-                    Settings.SetFormDetails(frm.Text, frm.Width, frm.Height, frm.Location.X, frm.Location.Y);
-                };
-
-
-                // camera label on the window
-                Label camLabel = new Label();
-                camLabel.Text = cam.Key;
-                camLabel.Font = new Font(camLabel.Font.FontFamily, 16);
-                camLabel.AutoSize = true;
-                // position later can be implemented in the config file
-                //camLabel.Location = new System.Drawing.Point(50, 50);
-                camLabel.ForeColor = Color.White; 
-                camLabel.BackColor = Color.Empty; //Initial color with full transparency, why not full? lets examine it later
-                camLabel.Tag = "";
-                camLabel.Visible = false;
-                if (!Settings.Advanced.DisableCameraCaptions)
-                {
-                    if (Settings.Advanced.StaticCameraCaption)
-                        camLabel.Visible = true;
-                    else
-                        camLabel.Visible = false;
-                }
-                forms[i].Controls.Add(camLabel);
-
-                
-                forms[i].MouseEnter += (sender, e) =>
-                {
-                    mouseEnterCount++;
-                    Form frm = sender as Form;
-                    if (frm != null)
-                    {
-                        Label camLbl = frm.Controls[0] as Label;
-                        if (camLbl != null)
-                        {
-                            if (mouseEnterCount == 1 && camLbl.Tag.ToString() == "" && !Settings.Advanced.StaticCameraCaption && !Settings.Advanced.DisableCameraCaptions)
-                            {
-                                camLbl.Tag = "lock";
-                                // reset colors
-                                camLbl.ForeColor = Color.White;
-                                camLbl.BackColor = Color.Empty;
-                                camLbl.Visible = true;
-                                LabelFadeOut(camLbl,frm);
-                            }
-                        }
-
-                    }
-                };
-
-                forms[i].MouseLeave += (sender, e) =>
-                {
-                    mouseEnterCount = 0;
-                    
-                };
-                
-    
-
-                // bind keydown events
-                forms[i].KeyDown += FormsKeyDown;
-                // detect which window is focused
-                forms[i].GotFocus += FormsGotFocus;
-                // Enable moving windows on mouse click
-                forms[i].MouseDown += FormsMouseDown;
-                // mouse move event
-                forms[i].MouseMove += FormsMouseMove;
-                // mouse button up event
-                forms[i].MouseUp += FormsMouseUp;
-                // end of enabling windows movement on mouse click
-
-                forms[i].DoubleClick += new EventHandler(video_DoubleClick);
-                forms[i].Tag = i;
-
-                forms[i].Text = cam.Key;
-                Chans[i] = PlayerSdk.EasyPlayer_OpenStream(cam.Value.Url, forms[i].Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
-                cam.Value.ChannelID = Chans[i];
-                if (Chans[i] > 0)
-                {
-                    PlayerSdk.EasyPlayer_SetFrameCache(Chans[i], streamCache);
-                    PlayerSdk.EasyPlayer_SetShownToScale(Chans[i], 1);
-                }
-                forms[i].Show();
-                MoveWindow(forms[i].Handle, cam.Value.WX, cam.Value.WY, cam.Value.WWidth, cam.Value.WHeight, true);
-                i++;
             }
+            ToolStripMenuItem menuItem = new ToolStripMenuItem();
+            menuItem.Text = "Cameras";
+           
+            menuItem.DropDownItems.AddRange(CamerasMenu.ToArray());
+            MainContextMenu.Items.Insert(0,menuItem);
+            trayIcon.ContextMenuStrip = MainContextMenu;
 
             if (Settings.Logging > 0 && Settings.LogWindow > 0)
             {
@@ -541,33 +419,8 @@ namespace AnotherRTSP
             }
         }
 
-        // full screen on window
-        private void video_DoubleClick(object sender, EventArgs e)
-        {
-            Form frm = sender as Form;
-            int id = (int)frm.Tag;
-            if (id >= 0)
-            {
-                focusedVideo = id;
-                channelID = Chans[id];
 
-                if (videoFullScreen)
-                {
-                    forms[focusedVideo].WindowState = FormWindowState.Normal;
-                    videoFullScreen = false;
-                }
-                else
-                {
-                    forms[focusedVideo].WindowState = FormWindowState.Maximized;
-                    videoFullScreen = true;
-                }
-            }
-        }
-
-        private int MediaCallback(int _channelId, IntPtr _channelPtr, int _frameType, IntPtr pBuf, ref PlayerSdk.EASY_FRAME_INFO _frameInfo)
-        {
-            return 0;
-        }
+   
 
     }
 }

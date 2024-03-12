@@ -83,17 +83,23 @@ namespace AnotherRTSP
         {
             if (Settings.Logging > 0)
             {
-                // only fire when user actually closes the form
-                if (e.CloseReason == CloseReason.UserClosing)
-                {
-                    Settings.LogWindow = 0;
-                }
-                Settings.LogWindowRunning = false;
                 Form frm = sender as Form;
-                Settings.LogWindowX = frm.Location.X;
-                Settings.LogWindowY = frm.Location.Y;
-                Settings.LogWindowHeight = frm.Height;
-                Settings.LogWindowWidth = frm.Width;
+                if (frm != null)
+                {
+                    Settings.LogWindowX = frm.Location.X;
+                    Settings.LogWindowY = frm.Location.Y;
+                    Settings.LogWindowHeight = frm.Height;
+                    Settings.LogWindowWidth = frm.Width;
+
+                    // only fire when user actually closes the form
+                    if (e.CloseReason == CloseReason.UserClosing)
+                    {
+                        Settings.LogWindow = 0;
+                    }
+                    Settings.LogWindowRunning = false;
+                    CustomUI.logmenuItem.Checked = false;
+
+                }
             }
         }
 
@@ -101,7 +107,7 @@ namespace AnotherRTSP
         {
             if (Settings.LogWindowHeight > 0 && Settings.LogWindowWidth > 0)
                        this.Size = new Size(Settings.LogWindowWidth, Settings.LogWindowHeight);
-            if (Settings.LogWindowX > 0 && Settings.LogWindowY > 0)
+           // if (Settings.LogWindowX > 0 && Settings.LogWindowY > 0)
                         this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY); 
             if (Settings.Logging > 0 && File.Exists(Settings.LogPath))
             {
@@ -110,7 +116,7 @@ namespace AnotherRTSP
                 Settings.LogWindowRunning = true;
                 logThread.Start();
                 Settings.LogWindow = 1;
-                
+                CustomUI.logmenuItem.Checked = true;
             }
         }
 

@@ -14,18 +14,6 @@ using AnotherRTSP.Services;
 
 namespace AnotherRTSP
 {
-    public class Camera
-    {
-        public int Id { get; set; }
-        public int ChannelID { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
-        public int WWidth { get; set; }
-        public int WHeight { get; set; }
-        public int WX { get; set; }
-        public int WY { get; set; }
-    }
-
     public class MqttStack
     {
         public string Server { get; set; }
@@ -54,6 +42,8 @@ namespace AnotherRTSP
         public bool StaticCameraCaption { get; set; }
         public bool DisableCameraCaptions { get; set; }
         public bool AllCamerasWindowsOnTop { get; set; }
+        // new settings
+        public int ResizeWindowBy { get; set; }
     } 
 
     public static class Settings
@@ -64,8 +54,6 @@ namespace AnotherRTSP
         public static bool MqttServiceRunning = false;
         public static bool LogWindowRunning = false;
         public static int LedsCount;
-        //public static Dictionary<string, int> ledStates = new Dictionary<string, int>();
-
         public static string LogPath = "";
         public static int WindowWidth;
         public static int WindowHeight;
@@ -85,8 +73,7 @@ namespace AnotherRTSP
         public static int Logging;
         public static int LogWindow;
 
-        public static Dictionary<string, Camera> Cameras;
-
+        public static List<Camera> Cameras = new List<Camera>();
         public static MqttRulesDefinition NewMqttRule(int id, string name, string topic, int type, string value, string value2, int action)
         {
             var rule = new MqttRulesDefinition();
@@ -170,12 +157,14 @@ namespace AnotherRTSP
                 }
             }
 
-            foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            //foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            foreach (Camera cam in Cameras)
             {
-                ini.WriteInt("WWidth", cam.Value.WWidth, cam.Key);
-                ini.WriteInt("WHeight", cam.Value.WHeight, cam.Key);
-                ini.WriteInt("WX", cam.Value.WX, cam.Key);
-                ini.WriteInt("WY", cam.Value.WY, cam.Key);
+                ini.WriteInt("WWidth", cam.WWidth, cam.Name);
+                ini.WriteInt("WHeight", cam.WHeight, cam.Name);
+                ini.WriteInt("WX", cam.WX, cam.Name);
+                ini.WriteInt("WY", cam.WY, cam.Name);
+                ini.WriteInt("Disabled", cam.Disabled ? 1 : 0, cam.Name);
             }
             Logger.WriteLog("Program settings have been saved!");
         }
@@ -183,14 +172,15 @@ namespace AnotherRTSP
         public static void SetFormDetails(string name, int ww, int wh, int x, int y)
         {
             var cams = Cameras;
-            foreach (KeyValuePair<string, Camera> cam in cams)
+            foreach (Camera cam in Cameras) 
+            //foreach (KeyValuePair<string, Camera> cam in cams)
             {
-                if (cam.Key == name)
+                if (cam.Name == name)
                 {
-                    cam.Value.WHeight = wh;
-                    cam.Value.WWidth = ww;
-                    cam.Value.WX = x;
-                    cam.Value.WY = y;
+                    cam.WHeight = wh;
+                    cam.WWidth = ww;
+                    cam.WX = x;
+                    cam.WY = y;
                 }
             }
             Cameras = cams;
@@ -210,33 +200,38 @@ namespace AnotherRTSP
         public static void GetCams()
         {
             var ini = new IniFile();
-            Dictionary<string, Camera> Cams = new Dictionary<string, Camera>();
+            //Dictionary<string, Camera> Cams = new Dictionary<string, Camera>();
             var cameraNames = ini.GetKeys(camerasSection);
             foreach (string camName in cameraNames)
             {
                 var camUrl = ini.ReadDefault(camName, "", camerasSection);
                 if (camUrl != "")
                 {
-                    var camobj = new Camera();
-                    camobj.Url = camUrl;
-                    camobj.WWidth = ini.ReadIntDefault("WWidth", 240, camName);
-                    camobj.WHeight = ini.ReadIntDefault("WHeight", 180, camName);
-                    camobj.WX = ini.ReadIntDefault("WX", 0, camName);
-                    camobj.WY = ini.ReadIntDefault("WY", 0, camName);
-                    Cams.Add(camName, camobj);
+                    //var camobj = new Camera();
+                    string url = camUrl;
+                    int wwidth = ini.ReadIntDefault("WWidth", 240, camName);
+                    int wheight = ini.ReadIntDefault("WHeight", 180, camName);
+                    int wx = ini.ReadIntDefault("WX", 0, camName);
+                    int wy = ini.ReadIntDefault("WY", 0, camName);
+                    bool disabled = ini.ReadIntDefault("Disabled", 0, camName) != 0;
+                    Camera newcam = new Camera(camName,wwidth,wheight,wx,wy,url,disabled);
+                    Cameras.Add(newcam);
+
+                    //Cams.Add(camName, camobj);
                 }
             }
-            Cameras = Cams;
+            //Cameras = Cams;
         }
 
-        public static void OverrideCamsList(Dictionary<string, Camera> cameras)
+        public static void OverrideCamsList()
         {
             // delete ini section cameras
             var ini = new IniFile();
             ini.DeleteSection("Cameras");
-            foreach (KeyValuePair<string, Camera> cam in cameras)
+            foreach (Camera cam in Cameras)
             {
-                ini.Write(cam.Key, cam.Value.Url, "Cameras");
+                ini.Write(cam.Name, cam.Url, "Cameras");
+                // FIXME need to save more settings here for the cam details
             }
         }
 
@@ -312,12 +307,13 @@ namespace AnotherRTSP
             // advanced settings
             try
             {
-                Advanced.LedsWindowOnTop = (ini.ReadIntDefault("LedsWindowOnTop", 0, "Advanced") != 0);
-                Advanced.LedsSoundAlert = (ini.ReadIntDefault("LedsSoundAlert", 0, "Advanced") != 0);
-                Advanced.FocusAllWindowsOnClick = (ini.ReadIntDefault("FocusAllWindowsOnClick", 0, "Advanced") != 0);
-                Advanced.StaticCameraCaption = (ini.ReadIntDefault("StaticCameraCaption", 0, "Advanced") != 0);
-                Advanced.DisableCameraCaptions = (ini.ReadIntDefault("DisableCameraCaptions", 0, "Advanced") != 0);
-                Advanced.AllCamerasWindowsOnTop = (ini.ReadIntDefault("AllCamerasWindowsOnTop", 0, "Advanced") != 0);
+                Advanced.LedsWindowOnTop = ini.ReadIntDefault("LedsWindowOnTop", 0, "Advanced") != 0;
+                Advanced.LedsSoundAlert = ini.ReadIntDefault("LedsSoundAlert", 0, "Advanced") != 0;
+                Advanced.FocusAllWindowsOnClick = ini.ReadIntDefault("FocusAllWindowsOnClick", 0, "Advanced") != 0;
+                Advanced.StaticCameraCaption = ini.ReadIntDefault("StaticCameraCaption", 0, "Advanced") != 0;
+                Advanced.DisableCameraCaptions = ini.ReadIntDefault("DisableCameraCaptions", 0, "Advanced") != 0;
+                Advanced.AllCamerasWindowsOnTop = ini.ReadIntDefault("AllCamerasWindowsOnTop", 0, "Advanced") != 0;
+                Advanced.ResizeWindowBy = ini.ReadIntDefault("ResizeWindowBy", 1, "Advanced");
             }
             catch (Exception ex)
             {

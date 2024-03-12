@@ -75,7 +75,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\Camera.cs" />
     <Compile Include="Classes\Logger.cs" />
+    <Compile Include="Classes\Win32Func.cs" />
     <Compile Include="Components\TinyJson\DefaultDecoder.cs" />
     <Compile Include="Components\TinyJson\DefaultEncoder.cs" />
     <Compile Include="Components\TinyJson\Extensions.cs" />
@@ -89,6 +91,9 @@
     </Compile>
     <Compile Include="Components\Toast.Designer.cs">
       <DependentUpon>Toast.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Components\TransparentLabel.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="CustomUI.cs" />
     <Compile Include="FirstRun.cs">

@@ -74,7 +74,14 @@ namespace AnotherRTSP
                 if (thread.Id != Thread.CurrentThread.ManagedThreadId)
                 {
                     // Terminate the thread
-                    thread.Dispose();
+                    try
+                    {
+                        thread.Dispose();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 }
             }
         }

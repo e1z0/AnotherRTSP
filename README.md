@@ -40,6 +40,14 @@ This player doesn't aim to be a jack-of-all-trades; its focus is solely on provi
 
 I use such video surveillance tools as BlueIris and Frigate, so I didn't forget about them, as well as home automation, the program has integrated MQTT support, so it is possible to receive messages and react to them according to rules that you can create yourself. Whether it's a notification or another action, the app will let you integrate both movements and objects captured by the cameras. For example, if a person has entered the monitored area and the video surveillance system is set to recognize objects, you will receive a message directly on the desktop. Instead of messages it can be Sounds, Led Lights, Baloon tooltips and many more :)
 
+# Usage
+
+[See usage information on wiki](../../wiki/Usage)
+
+# Roadmap
+
+[See wiki page](../../wiki/Roadmap)
+
 # Operating System support
 
 * Windows XP (see the [wiki topic](../../wiki/Windows-XP-Support))

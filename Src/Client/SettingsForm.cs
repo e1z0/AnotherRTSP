@@ -58,15 +58,31 @@ namespace AnotherRTSP
                 Settings.MqttSettings.ClientID = clientidtextbox.Text;
 
             // cameras section
-            Dictionary<string, Camera> Cams = new Dictionary<string, Camera>();
             foreach (ListViewItem listItem in camerasListView1.Items)
             {
-                Camera newCamera = new Camera();
-                newCamera.Name = listItem.Text;
-                newCamera.Url = listItem.SubItems[1].Text;
-                Cams.Add(listItem.Text, newCamera);
+                string name = listItem.Text;
+                int width = 240;
+                int height = 180;
+                int posx = 0;
+                int posy = 0;
+                string url = listItem.SubItems[1].Text;
+                bool disabled = false;
+                foreach (Camera cam in Settings.Cameras)
+                {
+                    if (cam.Name == name)
+                    {
+                        cam.UpdateWindowSpecs();
+                        width = cam.WWidth;
+                        height = cam.WHeight;
+                        posx = cam.WX;
+                        posy = cam.WY;
+                        disabled = cam.Disabled;
+                    }
+                }
+                Camera newCamera = new Camera(name,width,height,posx,posy,url,disabled);
+                Settings.Cameras.Add(newCamera);
             }
-            Settings.OverrideCamsList(Cams);
+            Settings.OverrideCamsList();
             // advanced tab
             Settings.Advanced.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
             Settings.Advanced.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
@@ -92,9 +108,9 @@ namespace AnotherRTSP
 
 
             // load cameras
-            foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            foreach (Camera cam in Settings.Cameras)
             {
-                ListViewItem item = new ListViewItem(new[] { cam.Key, cam.Value.Url });
+                ListViewItem item = new ListViewItem(new[] { cam.Name, cam.Url });
                 camerasListView1.Items.Add(item);
             }
             // advanced tab
@@ -244,12 +260,12 @@ namespace AnotherRTSP
             Settings.LedWindowY = 0;
             Settings.LogWindowX = 0;
             Settings.LogWindowY = 0;
-            foreach (KeyValuePair<string, Camera> cam in Settings.Cameras)
+            foreach (Camera cam in Settings.Cameras)
             {
-                cam.Value.WX = 0;
-                cam.Value.WY = 0;
+                cam.SetFormSize(240, 180);
+                cam.SetFormLocation(0, 0);
             }
-            MessageBox.Show("You should restart the application now!");
+            MessageBox.Show("Resize done!");
         }
     }
 }
