@@ -40,6 +40,27 @@ This player doesn't aim to be a jack-of-all-trades; its focus is solely on provi
 
 I use such video surveillance tools as BlueIris and Frigate, so I didn't forget about them, as well as home automation, the program has integrated MQTT support, so it is possible to receive messages and react to them according to rules that you can create yourself. Whether it's a notification or another action, the app will let you integrate both movements and objects captured by the cameras. For example, if a person has entered the monitored area and the video surveillance system is set to recognize objects, you will receive a message directly on the desktop. Instead of messages it can be Sounds, Led Lights, Baloon tooltips and many more :)
 
+# Technical abilities
+
+Under the hood AnotherRTSP uses a library called LibEasyPlayer which is developed and maintained by TSINGSEE Qingxi Open Platform it is a Complete RTSP streaming media player project.
+Video encoding supports H.264, H.265, MPEG4, MJPEG, and audio supports G711A, G711U, G726, AAC. Supports RTSP over TCP/UDP protocol, supports soft/hard decoding, and is an excellent set of playback components for security streaming media platforms! LibEasyPlayer has gone through many years of development and iteration, and has been used in many commercial projects. It has become very stable and complete. Its functions include: live broadcast, video recording, and screenshots. It should be said that it has the most functionality, stability and completeness on the market. A powerful RTSP player library!
+
+Most domestic RTSP/RTP protocol players are based on ffmpeg (including the protocol layer and decoding layer). However, in the actual implementation of RTSP/RTP projects, due to the differences in the custom fields of each manufacturer, many Special compatibility is required, which is what ffmpeg players cannot achieve. LibEasyPlayer relies on the huge EasyDarwin user group and has adapted it to almost all domestic camera manufacturers. It is very compatible and very stable!
+
+Currently supported features list:
+
+- [x] Ultra-low latency RTSP player;
+- [x] Super device compatibility and customizability;
+- [x] Perfectly supports multi-window and multi-instance playback;
+- [ ] Support RTSP TCP/UDP mode switching;
+- [ ] Supports real-time setting of the playback buffer and mature low-latency frame tracking technology;
+- [x] Turn on the playback function in seconds;
+- [x] Support custom playback layout;
+- [x] The codec, display, and playback source codes are fully open, making it more flexible;
+- [ ] Support OSD text watermark;
+- [x] Support real-time recording and instant picture taking;
+- [ ] Detailed log output callback;
+
 # Usage
 
 [See usage information on wiki](../../wiki/Usage)
