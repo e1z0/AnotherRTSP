@@ -14,55 +14,84 @@ namespace AnotherRTSP
 {
     static class Program
     {
+        private static MqttService mqttService;
+        private static LogForm logService;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            // read the embedded version information
+            // Read the embedded version information
             Assembly assembly = Assembly.GetExecutingAssembly();
-            Stream stream = assembly.GetManifestResourceStream("AnotherRTSP.version.info");
-            byte[] data = new byte[stream.Length];
-            stream.Position = 0; // Set the stream position to the beginning
-            stream.Read(data, 0, data.Length); // Read the entire stream
-            Settings.VERSION = System.Text.Encoding.UTF8.GetString(data); 
-            // continue loading
+            using (Stream stream = assembly.GetManifestResourceStream("AnotherRTSP.version.info"))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                Settings.VERSION = reader.ReadToEnd();
+            }
+            // Enable visual styles and set text rendering default
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
-            //AppDomain.CurrentDomain.ProcessExit += new EventHandler(Application_ApplicationExit);
+            Application.ApplicationExit += Application_ApplicationExit;
+            // Load settings
             Settings.Load();
-            if (!Settings.FirstRun)
+
+            // Check for first run
+            if (Settings.FirstRun)
             {
-                if (Settings.CustomLayout > 0)
+                Application.Run(new FirstRun());
+                return;
+            }
+
+
+            // Initialize MQTT service and UI
+            if (Settings.CustomLayout > 0)
+            {
+                CustomUI ui = new CustomUI();
+                ui.Init();
+
+                // Start Log service if enabled
+                if (Settings.Logging > 0 && Settings.LogWindow > 0)
                 {
-                    MqttService mqttsvc = new MqttService();
-                    Thread thread = new Thread(mqttsvc.ServiceStart);
-                    thread.IsBackground = true;
-                    CustomUI ui = new CustomUI();
-                    ui.Init();
-                    
-                    // start mqtt service if enabled
-                    if (Settings.MqttEnabled > 0)
-                    {
-                        thread.Start();
-                    }
-                    Application.Run();
-                    thread.Join();
+                    logService = new LogForm();
+                    logService.Show();
                 }
-                else
+
+                // Start MQTT service if enabled
+                if (Settings.MqttEnabled > 0)
                 {
-                    Application.Run(new PlayerForm());
+                    mqttService = new MqttService();
+                    mqttService.StartService();
                 }
+                Application.Run();
             }
             else
             {
-                Application.Run(new FirstRun());
+                Application.Run(new PlayerForm());
             }
-            
         }
 
+
+        // application exit event, we should stop all threads on this event
+        static void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            Settings.Save();
+            if (mqttService != null)
+            {
+                mqttService.StopService(); // Stop MQTT service
+                mqttService.WaitForCompletion(); // Wait for MQTT service to stop
+            }
+            if (logService != null)
+            {
+                logService.StopService();
+                logService.WaitForCompletion();
+            }
+            // clean exit
+            Logger.WriteLog("Program gracefully closed!");
+            Application.Exit();
+        }
+
+        // for some reason i left it, maybe it be useful someday
         static void TerminateAllThreads()
         {
             // Get the current process
@@ -85,22 +114,6 @@ namespace AnotherRTSP
                 }
             }
         }
-        // bind application exit event and stop all threads on event
-        static void Application_ApplicationExit(object sender, EventArgs e)
-        {
-                Settings.MqttServiceRunning = false;
-                Settings.LogWindowRunning = false;
-                Settings.Save();
-                // wait for all threads to terminate
-                Thread.Sleep(500);
-                Logger.WriteLog("Program gracefully closed!");
-                // forcefully terminate threads if remaining
-                TerminateAllThreads();
-                // clean exit
-                Application.Exit();
-                // if application is still active, then terminate it
-                Environment.Exit(0);
 
-        }
     }
 }

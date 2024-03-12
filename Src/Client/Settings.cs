@@ -329,10 +329,11 @@ namespace AnotherRTSP
             if (Logging > 0)
             {
                 Logger.WriteLog("Program started. Logging enabled!");
-                if (LogWindow > 0)
+                /*if (LogWindow > 0)
                 {
                     ShowOrActivateForm<LogForm>();
                 }
+                 */ 
             }
 
             try

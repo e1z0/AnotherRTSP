@@ -15,12 +15,42 @@ namespace AnotherRTSP
     public partial class LogForm : Form
     {
         private string filePath;
+        private Thread logThread;
 
         public LogForm()
         {
             InitializeComponent();
             this.filePath = Settings.LogPath;
 
+        }
+
+        public void StartService()
+        {
+            if (Settings.Logging > 0 && File.Exists(Settings.LogPath))
+            {
+                logThread = new Thread(ReadLogFile);
+                logThread.Start();
+                Logger.WriteLog("Log Window Thread is running...");
+                if (logThread.IsAlive)
+                {
+                    Settings.LogWindowRunning = true;
+                    Settings.LogWindow = 1;
+                    CustomUI.logmenuItem.Checked = true;
+                }
+            }
+        }
+
+        public void StopService()
+        {
+            logThread.Abort();
+            Settings.LogWindowRunning = false;
+            CustomUI.logmenuItem.Checked = false;
+            Logger.WriteLog("Log Window Thread is done.");
+        }
+
+        public void WaitForCompletion()
+        {
+            logThread.Join();
         }
 
 
@@ -30,7 +60,7 @@ namespace AnotherRTSP
             var initialFileSize = new FileInfo(filePath).Length;
             var lastReadLength = initialFileSize - 1024;
             if (lastReadLength < 0) lastReadLength = 0;
-            while (Settings.LogWindowRunning)
+            while (logThread.ThreadState == ThreadState.Running)
             {
                 try
                 {
@@ -60,7 +90,7 @@ namespace AnotherRTSP
                 catch { }
                 Thread.Sleep(1000);
             }
-            Logger.WriteLog("Log Window Thread is done.");
+            
 
         }
 
@@ -96,8 +126,9 @@ namespace AnotherRTSP
                     {
                         Settings.LogWindow = 0;
                     }
-                    Settings.LogWindowRunning = false;
-                    CustomUI.logmenuItem.Checked = false;
+                    StopService();
+                    //Settings.LogWindowRunning = false;
+                    //CustomUI.logmenuItem.Checked = false;
 
                 }
             }
@@ -108,16 +139,8 @@ namespace AnotherRTSP
             if (Settings.LogWindowHeight > 0 && Settings.LogWindowWidth > 0)
                        this.Size = new Size(Settings.LogWindowWidth, Settings.LogWindowHeight);
            // if (Settings.LogWindowX > 0 && Settings.LogWindowY > 0)
-                        this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY); 
-            if (Settings.Logging > 0 && File.Exists(Settings.LogPath))
-            {
-                Thread logThread = new Thread(ReadLogFile);
-                logThread.IsBackground = true;
-                Settings.LogWindowRunning = true;
-                logThread.Start();
-                Settings.LogWindow = 1;
-                CustomUI.logmenuItem.Checked = true;
-            }
+                        this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY);
+                        StartService();
         }
 
         private void LogForm_FormClosed(object sender, FormClosedEventArgs e)

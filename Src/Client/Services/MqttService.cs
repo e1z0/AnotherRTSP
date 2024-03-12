@@ -18,11 +18,14 @@ namespace AnotherRTSP.Services
 {
     class MqttService
     {
-        public void ServiceStart()
+        private MqttClient client;
+        private Thread mqttThread;
+
+        private void ServiceStart()
         {
             Logger.WriteLog("Mqtt service Thread is running...");
 
-            var client = new MqttClient(Settings.MqttSettings.Server);
+            client = new MqttClient(Settings.MqttSettings.Server);
 
             // register handler to a received message
             client.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
@@ -38,11 +41,42 @@ namespace AnotherRTSP.Services
             }
             Settings.MqttServiceRunning = true;
 
-            while (Settings.MqttServiceRunning)
+            while (mqttThread.ThreadState == ThreadState.Running)
             {
                 Thread.Sleep(500);
             }
+        }
+
+
+        public void StartService()
+        {
+            mqttThread = new Thread(ServiceStart);
+            mqttThread.Start();
+            if (mqttThread.IsAlive)
+                Settings.MqttServiceRunning = true;
+        }
+
+        public void StopService()
+        {
+            mqttThread.Abort();
+            Settings.MqttServiceRunning = false;
+            if (client != null)
+            {
+                try
+                {
+                    client.Disconnect();
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLog("Unable to disconnect from mqtt server on mqtt thread service end: {0}", ex.StackTrace.ToString());
+                }
+            }
             Logger.WriteLog("Mqtt service Thread is done.");
+        }
+
+        public void WaitForCompletion()
+        {
+            mqttThread.Join();
         }
 
 
@@ -79,7 +113,7 @@ namespace AnotherRTSP.Services
                 // raw message
                 if (rule.Type == 0)
                 {
-                    Logger.WriteLog("MQTT alert type: {0} topic: {1} msg: {2}", rule.Type, e.Topic,mqttMessage);
+                    Logger.WriteLog("MQTT alert type: {0} topic: {1} msg: {2}", rule.Type, e.Topic, mqttMessage);
                     // log message
                     if (rule.Action == 0)
                     {
@@ -107,7 +141,7 @@ namespace AnotherRTSP.Services
                             LedStateManager.UpdateLedState(rule.Name, 0);
                         }
                     }
-                    
+
                 }
                 // json message
                 else if (rule.Type == 1)
@@ -134,7 +168,7 @@ namespace AnotherRTSP.Services
                         // all true
                         if (containsAll)
                         {
-                            LedStateManager.UpdateLedState(rule.Name,1);
+                            LedStateManager.UpdateLedState(rule.Name, 1);
                             //Logger.WriteLog("LED [{0}] = {1}", rule.Name, 1);
                             if (Settings.Advanced.LedsSoundAlert)
                                 SystemSounds.Exclamation.Play();
@@ -153,11 +187,11 @@ namespace AnotherRTSP.Services
             }
             else
             {
-                Logger.WriteLog("MQTT topic invalid: "+e.Topic);
+                Logger.WriteLog("MQTT topic invalid: " + e.Topic);
             }
-          
 
-            }
+
+        }
 
     }
 }

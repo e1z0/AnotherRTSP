@@ -220,12 +220,16 @@ namespace AnotherRTSP.Classes
 
                 cameraForm.Click += (sender, e) =>
                 {
-                    if (Settings.Advanced.FocusAllWindowsOnClick && cameraForm.WindowState != FormWindowState.Maximized)
+                    MouseEventArgs mouseEvent = e as MouseEventArgs;
+                    if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
                     {
-                        // Get all open forms and bring each one to the front
-                        foreach (Form form in Application.OpenForms)
+                        if (Settings.Advanced.FocusAllWindowsOnClick && cameraForm.WindowState != FormWindowState.Maximized)
                         {
-                            form.Focus();
+                            // Get all open forms and bring each one to the front
+                            foreach (Form form in Application.OpenForms)
+                            {
+                                form.Focus();
+                            }
                         }
                     }
                 };

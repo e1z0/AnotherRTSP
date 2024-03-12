@@ -230,9 +230,9 @@ namespace AnotherRTSP
             {
                    var mouseArgs = e as MouseEventArgs;
                    // left mouse button click activates all windows
-                   if (mouseArgs.Button == MouseButtons.Left)
+                   if (mouseArgs != null && mouseArgs.Button == MouseButtons.Left)
                    {
-                       }
+
                        if (Settings.Advanced.FocusAllWindowsOnClick)
                        {
                            // Get all open forms and bring each one to the front
@@ -241,7 +241,7 @@ namespace AnotherRTSP
                                Win32Func.SetForegroundWindow(form.Handle);
                            }
                        }
-                   
+                   }
             };
             // Make the tray icon visible
             trayIcon.Visible = true;
@@ -290,11 +290,12 @@ namespace AnotherRTSP
             MainContextMenu.Items.Insert(0,menuItem);
             trayIcon.ContextMenuStrip = MainContextMenu;
 
+            /*
             if (Settings.Logging > 0 && Settings.LogWindow > 0)
             {
                 Settings.ShowOrActivateForm<LogForm>();
             }
-
+            */
 
 
             if (Settings.MqttEnabled > 0 && Settings.LedsCount > 0)
