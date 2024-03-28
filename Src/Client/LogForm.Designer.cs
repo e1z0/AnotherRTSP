@@ -41,6 +41,7 @@
             this.LogBox.Size = new System.Drawing.Size(600, 315);
             this.LogBox.TabIndex = 0;
             this.LogBox.TextChanged += new System.EventHandler(this.LogBox_TextChanged);
+            this.LogBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LogBox_MouseDown);
             // 
             // LogForm
             // 
@@ -57,6 +58,8 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.LogForm_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.LogForm_FormClosed);
             this.Load += new System.EventHandler(this.LogForm_Load);
+            this.Click += new System.EventHandler(this.LogForm_Click);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LogForm_MouseDown);
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -25,26 +25,47 @@ namespace AnotherRTSP.Services
         {
             Logger.WriteLog("Mqtt service Thread is running...");
 
-            client = new MqttClient(Settings.MqttSettings.Server);
+
+            client = new MqttClient(Settings.MqttSettings.Server, Settings.MqttSettings.Port, false, null, null, MqttSslProtocols.None);
+            
 
             // register handler to a received message
-            client.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
-
+            client.MqttMsgPublishReceived += MqttMsgPublishReceived;
+            client.ConnectionClosed += OnDisconnect;
+         
             var clientId = Guid.NewGuid().ToString();
-            client.Connect(Settings.MqttSettings.ClientID);
-
-            foreach (MqttRulesDefinition rule in Settings.MqttRulesSettings)
+            if (Settings.MqttSettings.ClientID != "")
+                clientId = Settings.MqttSettings.ClientID;
+            try
             {
-                if (rule != null && rule.Topic != "")
-                    client.Subscribe(new string[] { rule.Topic },
-                new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                client.Connect(Settings.MqttSettings.ClientID,Settings.MqttSettings.Username,Settings.MqttSettings.Password);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog("Unable to connect to MQTT server at: {0}:{1} error: {2}", Settings.MqttSettings.Server, Settings.MqttSettings.Port,ex.Message);
             }
             Settings.MqttServiceRunning = true;
+
+            if (client.IsConnected)
+            {
+                Logger.WriteLog("Connected to MQTT server at: {0}:{1}", Settings.MqttSettings.Server, Settings.MqttSettings.Port);
+                foreach (MqttRulesDefinition rule in Settings.MqttRulesSettings)
+                {
+                    if (rule != null && rule.Topic != "")
+                        client.Subscribe(new string[] { rule.Topic },
+                    new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                }
+            }
 
             while (mqttThread.ThreadState == ThreadState.Running)
             {
                 Thread.Sleep(500);
             }
+        }
+
+        private static void OnDisconnect(object sender, EventArgs e)
+        {
+            Logger.WriteLog("MQTT Server disconnected...");
         }
 
 
@@ -94,7 +115,7 @@ namespace AnotherRTSP.Services
         }
 
 
-        static void client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        static void MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
         {
             /* type: 0 raw, 1 json
             * ACTIONS:

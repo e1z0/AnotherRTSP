@@ -82,7 +82,7 @@ namespace AnotherRTSP
 
                                 var text = ASCIIEncoding.ASCII.GetString(buffer, 0, bytesRead);
                                 UpdateTextBox(text);
-                       
+
                             }
                         }
                     }
@@ -90,7 +90,7 @@ namespace AnotherRTSP
                 catch { }
                 Thread.Sleep(1000);
             }
-            
+
 
         }
 
@@ -127,9 +127,6 @@ namespace AnotherRTSP
                         Settings.LogWindow = 0;
                     }
                     StopService();
-                    //Settings.LogWindowRunning = false;
-                    //CustomUI.logmenuItem.Checked = false;
-
                 }
             }
         }
@@ -137,20 +134,45 @@ namespace AnotherRTSP
         private void LogForm_Load(object sender, EventArgs e)
         {
             if (Settings.LogWindowHeight > 0 && Settings.LogWindowWidth > 0)
-                       this.Size = new Size(Settings.LogWindowWidth, Settings.LogWindowHeight);
-           // if (Settings.LogWindowX > 0 && Settings.LogWindowY > 0)
-                        this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY);
-                        StartService();
+                this.Size = new Size(Settings.LogWindowWidth, Settings.LogWindowHeight);
+            this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY);
+            StartService();
         }
 
         private void LogForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-           
+
         }
 
         private void LogBox_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void LogForm_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void LogForm_MouseDown(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void LogBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            MouseEventArgs mouseEvent = e as MouseEventArgs;
+            if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
+            {
+                if (Settings.Advanced.FocusAllWindowsOnClick)
+                {
+                    // Get all open forms and bring each one to the front
+                    foreach (Form form in Application.OpenForms)
+                    {
+                        form.Focus();
+                    }
+                }
+            }
         }
     }
 }

@@ -168,6 +168,14 @@ namespace AnotherRTSP
             // Assign this method to mouse_Down event of Form or Panel,whatever you want
             if (Control.MouseButtons == MouseButtons.Left)
             {
+                if (Settings.Advanced.FocusAllWindowsOnClick)
+                {
+                    // Get all open forms and bring each one to the front
+                    foreach (Form form in Application.OpenForms)
+                    {
+                        form.Focus();
+                    }
+                }
                 isMoving = true;
                 movX = e.X;
                 movY = e.Y;
@@ -308,6 +316,7 @@ namespace AnotherRTSP
                 }
                 Form ledform = new Form();
                 ledform.ShowInTaskbar = false;
+                ledform.Name = "Leds";
                 ledform.Text = "Leds";
                 ledform.Icon = icon;
                 ledform.BackColor = Color.Black;

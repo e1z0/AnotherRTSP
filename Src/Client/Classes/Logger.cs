@@ -31,5 +31,11 @@ namespace AnotherRTSP.Classes
                 }
             }
         }
+        public static void WriteDebug(string message, params object[] args)
+        {
+#if DEBUG
+            WriteLog("DEBUG -> " + message, args);
+#endif
+        }
     }
 }

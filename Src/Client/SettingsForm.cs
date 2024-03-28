@@ -265,6 +265,18 @@ namespace AnotherRTSP
                 cam.SetFormSize(240, 180);
                 cam.SetFormLocation(0, 0);
             }
+            foreach (Form form in Application.OpenForms)
+            {
+                if (form.Name == "Leds")
+                {
+                    Win32Func.MoveWindow(form.Handle, 0, 0, form.Width, form.Height, true);
+                }
+                else if (form.Name == "LogForm")
+                {
+                    Win32Func.MoveWindow(form.Handle,0,0,616,354,true);
+                }
+                
+            }
             MessageBox.Show("Resize done!");
         }
     }

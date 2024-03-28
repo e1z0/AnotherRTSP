@@ -16,6 +16,8 @@ namespace AnotherRTSP
     {
         private static MqttService mqttService;
         private static LogForm logService;
+
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>

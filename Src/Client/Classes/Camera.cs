@@ -31,6 +31,7 @@ namespace AnotherRTSP.Classes
         public bool Disabled { get; set; }
         public bool SoundEnabled { get; set; }
         public bool FullScreen { get; set; }
+        public bool LastStrechState { get; set; }
         public bool Recording { get; set; }
         public ContextMenuStrip contextMenu { get; set; }
 
@@ -48,6 +49,10 @@ namespace AnotherRTSP.Classes
         public ToolStripMenuItem camMenuItem = new ToolStripMenuItem();
         public ToolStripMenuItem recordMenuItem = new ToolStripMenuItem();
         public ToolStripMenuItem enableSoundMenuItem = new ToolStripMenuItem();
+        // window resize and move variables
+        private int movX, movY;
+        private bool isMoving;
+        private bool FormLock; 
 
         private Form cameraForm;
 
@@ -218,21 +223,7 @@ namespace AnotherRTSP.Classes
                     cameraForm.TopMost = true;
 
 
-                cameraForm.Click += (sender, e) =>
-                {
-                    MouseEventArgs mouseEvent = e as MouseEventArgs;
-                    if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
-                    {
-                        if (Settings.Advanced.FocusAllWindowsOnClick && cameraForm.WindowState != FormWindowState.Maximized)
-                        {
-                            // Get all open forms and bring each one to the front
-                            foreach (Form form in Application.OpenForms)
-                            {
-                                form.Focus();
-                            }
-                        }
-                    }
-                };
+                cameraForm.Click += CameraClick;
 
                 cameraForm.FormClosing += (sender, e) =>
                 {
@@ -244,7 +235,6 @@ namespace AnotherRTSP.Classes
                 Label camLabel = new Label();
                 camLabel.Text = Name;
                 camLabel.Font = new Font(camLabel.Font.FontFamily, 16);
-                
                 camLabel.AutoSize = true;
                 camLabel.BorderStyle = BorderStyle.None;
                 camLabel.ForeColor = Color.White;
@@ -258,6 +248,20 @@ namespace AnotherRTSP.Classes
                     else
                         camLabel.Visible = false;
                 }
+
+                camLabel.Click += (sender, e) => {
+                    Label lbl = sender as Label;
+                    if (lbl != null)
+                    {
+                        Logger.WriteDebug("camera label click");
+                        Form frm = lbl.Parent as Form;
+                        if (frm != null)
+                            CameraFullScreen(frm, FullScreen);
+                    }
+                };
+
+
+
                 cameraForm.Controls.Add(camLabel);
 
 
@@ -278,7 +282,7 @@ namespace AnotherRTSP.Classes
                                 camLbl.ForeColor = Color.White;
                                 camLbl.BackColor = Color.Transparent;
                                 camLbl.Visible = true;
-                                LabelFadeOut(camLbl, frm);
+                                CameraLabelFadeOut(camLbl, frm);
                             }
                         }
 
@@ -292,19 +296,19 @@ namespace AnotherRTSP.Classes
                 };
 
                 // bind keydown events
-                cameraForm.KeyDown += CustomUI.FormsKeyDown;
+                cameraForm.KeyDown += CameraKeyDown;
                 // detect which window is focused
                 //cameraForm.GotFocus += (sender, e) => {
                 //};
                 // Enable moving windows on mouse click
-                cameraForm.MouseDown += CustomUI.FormsMouseDown;
+                cameraForm.MouseDown += CameraMouseDown;
                 // mouse move event
-                cameraForm.MouseMove += CustomUI.FormsMouseMove;
+                cameraForm.MouseMove += CameraMouseMove;
                 // mouse button up event
-                cameraForm.MouseUp += CustomUI.FormsMouseUp;
+                cameraForm.MouseUp += CameraMouseUp;
                 // end of enabling windows movement on mouse click
 
-                cameraForm.DoubleClick += new EventHandler(video_DoubleClick);
+                cameraForm.DoubleClick += new EventHandler(CameraDoubleClick);
                 cameraForm.Tag = Id;
                 cameraForm.Text = Name;
                 callBack = new PlayerSdk.MediaSourceCallBack(MediaCallback);
@@ -312,6 +316,7 @@ namespace AnotherRTSP.Classes
                 if (ChannelID > 0)
                 {
                     PlayerSdk.EasyPlayer_SetFrameCache(ChannelID, streamCache);
+                    LastStrechState = true;
                     PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
                 }
                 cameraForm.Show();
@@ -319,29 +324,171 @@ namespace AnotherRTSP.Classes
             }
         }
 
-        // full screen on window
-        private void video_DoubleClick(object sender, EventArgs e)
+        private bool InvalidResolution()
         {
+            bool badresolution = false;
+            Screen primaryScreen = Screen.PrimaryScreen;
+            var aspect = (float)primaryScreen.Bounds.Width / primaryScreen.Bounds.Height;
+ 
+            switch (primaryScreen.Bounds.Height)
+            {
+                case 600:
+                    badresolution = true;
+                    break;
+                case 720:
+                    badresolution = true;
+                    break;
+                case 768:
+                    badresolution = true;
+                    break;
+                case 800:
+                    badresolution = true;
+                    break;
+                default:
+                    badresolution = false;
+                    break;
+            }
+
+            Logger.WriteDebug("Detected aspect ratio: {0} working area: {1} bounds: {2} Bad resolution: {3}", aspect, primaryScreen.WorkingArea, primaryScreen.Bounds, badresolution);
+            return badresolution;
+        }
+
+        private void CameraFullScreen(Form frm, bool state)
+        {
+            if (state)
+            {
+                frm.WindowState = FormWindowState.Normal;
+                FullScreen = false;
+                if (InvalidResolution())
+                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, LastStrechState ? 1 : 0);
+            }
+            else
+            {           
+                frm.WindowState = FormWindowState.Maximized;
+                FullScreen = true;
+                if (InvalidResolution())
+                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
+            }
+        }
+
+        /*
+        private void CameraBackToNormal(Form frm)
+        {
+            frm.WindowState = FormWindowState.Normal;
+            FullScreen = false;
+        }
+         */
+
+        // full screen on window
+        private void CameraDoubleClick(object sender, EventArgs e)
+        {
+            Logger.WriteDebug("Camera window double click");
+            FormLock = true;
             Form frm = sender as Form;
             if (frm != null)
+                CameraFullScreen(frm, FullScreen);
+            FormLock = false;
+        }
+
+        public static void CameraKeyDown(object sender, KeyEventArgs e)
+        {
+            Form frm = sender as Form;
+
+            if (e.KeyCode == Keys.Up)
             {
-                if (FullScreen)
+                frm.Height -= Settings.Advanced.ResizeWindowBy;
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                frm.Height += Settings.Advanced.ResizeWindowBy;
+            }
+            else if (e.KeyCode == Keys.Left)
+            {
+                frm.Width -= Settings.Advanced.ResizeWindowBy;
+            }
+            else if (e.KeyCode == Keys.Right)
+            {
+                frm.Width += Settings.Advanced.ResizeWindowBy;
+            }
+        }
+
+        private void CameraClick(object sender, EventArgs e)
+        {
+            MouseEventArgs mouseEvent = e as MouseEventArgs;
+            if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
+            {
+                if (Settings.Advanced.FocusAllWindowsOnClick && cameraForm.WindowState != FormWindowState.Maximized)
                 {
-                    frm.WindowState = FormWindowState.Normal;
-                    FullScreen = false;
-                }
-                else
-                {
-                    frm.WindowState = FormWindowState.Maximized;
-                    FullScreen = true;
+                    // Get all open forms and bring each one to the front
+                    foreach (Form form in Application.OpenForms)
+                    {
+                        form.Focus();
+                    }
                 }
             }
+            FormLock = true;
+        }
+
+        private void CameraMouseDown(object sender, MouseEventArgs e)
+        {
+            // Assign this method to mouse_Down event of Form or Panel,whatever you want
+            if (!FormLock)
+            {
+                if (e != null && e.Button == MouseButtons.Left && e.Clicks == 1)
+                {
+                    Logger.WriteDebug("Camera window mouse down");
+                    isMoving = true;
+                    movX = e.X;
+                    movY = e.Y;
+                }
+                if (Control.MouseButtons == MouseButtons.Right)
+                    isMoving = false;
+            }
+             
+        }
+
+        private void CameraMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!FormLock)
+            {
+                if (isMoving)
+                {
+                    Logger.WriteDebug("Camera window is moving");
+                    if (sender is Form)
+                    {
+                        Form frm = (Form)sender;
+                        if (frm != null)
+                            frm.SetDesktopLocation(Control.MousePosition.X - movX, Control.MousePosition.Y - movY);
+                    }
+                    else
+                    {
+                        Control control = sender as Control;
+                        if (control != null)
+                        {
+                            Form parentForm = control.FindForm();
+                            parentForm.SetDesktopLocation(Control.MousePosition.X - movX, Control.MousePosition.Y - movY);
+                        }
+
+                    }
+                }
+            }
+        }
+
+        private void CameraMouseUp(object sender, MouseEventArgs e)
+        {
+            // Assign this method to Mouse_Up event of Form or Panel.
+            if (e.Button == MouseButtons.Left)
+            {
+                Logger.WriteDebug("Camera window mouse up");
+                isMoving = false;
+            }
+            FormLock = false;
         }
 
 
 
 
-        public void LabelFadeOut(Label label, Form parent, int timeout = 2000)
+        private void CameraLabelFadeOut(Label label, Form parent, int timeout = 2000)
         {
 
             if (label.Visible)
@@ -389,6 +536,8 @@ namespace AnotherRTSP.Classes
             //Logger.WriteLog("libEasyPlayer DEBUG: {0}, {1}", _channelId, _frameType); 
             return 0;
         }
+
+
 
  
     }

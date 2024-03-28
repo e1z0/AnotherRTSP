@@ -9,10 +9,10 @@ namespace EasyPlayerNetSDK
 {
     public class PlayerSdk
     {
-        #region 数据结构
+        #region data structure
 
         /// <summary>
-        /// 编码格式
+        /// Encoding format
         /// </summary>
         public enum RENDER_FORMAT
         {
@@ -43,35 +43,35 @@ namespace EasyPlayerNetSDK
         }
 
         /// <summary>
-        /// 帧结构信息
+        /// Frame structure information
         /// </summary>
         [StructLayoutAttribute(LayoutKind.Sequential)]
         public struct EASY_FRAME_INFO
         {
-            public uint codec;                  /* 音视频格式 */
+            public uint codec;                  /* Audio and video format */
 
-            public uint type;                   /* 视频帧类型 */
-            public byte fps;                    /* 视频帧率 */
-            public ushort width;               /* 视频宽 */
-            public ushort height;              /* 视频高 */
+            public uint type;                   /* Video frame type */
+            public byte fps;                    /* Video frame rate */
+            public ushort width;               /* video width */
+            public ushort height;              /* video height */
 
-            public uint reserved1;         /* 保留参数1 */
-            public uint reserved2;         /* 保留参数2 */
+            public uint reserved1;         /* Reserve parameter 1 */
+            public uint reserved2;         /* Reserve parameter 2 */
 
-            public uint sample_rate;       /* 音频采样率 */
-            public uint channels;          /* 音频声道数 */
-            public uint bits_per_sample;        /* 音频采样精度 */
+            public uint sample_rate;       /* Audio sample rate */
+            public uint channels;          /* Number of audio channels */
+            public uint bits_per_sample;        /* Audio sampling accuracy */
 
-            public uint length;                /* 音视频帧大小 */
-            public uint timestamp_usec;        /* 时间戳,微妙 */
-            public uint timestamp_sec;          /* 时间戳 秒 */
+            public uint length;                /* Audio and video frame size */
+            public uint timestamp_usec;        /* timestamp, subtle */
+            public uint timestamp_sec;          /* timestamp seconds */
 
-            public float bitrate;                       /* 比特率 */
-            public float losspacket;                    /* 丢包率 */
+            public float bitrate;                       /* bitrate */
+            public float losspacket;                    /* Packet loss rate */
         }
 
         /// <summary>
-        /// 坐标
+        /// coordinate
         /// </summary>
         [StructLayoutAttribute(LayoutKind.Sequential)]
         public struct Point
@@ -84,7 +84,7 @@ namespace EasyPlayerNetSDK
         }
 
         /// <summary>
-        /// 像素信息
+        /// Pixel information
         /// </summary>
         [StructLayoutAttribute(LayoutKind.Sequential)]
         public struct tagRECT
@@ -101,91 +101,89 @@ namespace EasyPlayerNetSDK
         #endregion
 
         /// <summary>
-        /// 流回调
+        /// Stream callback
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.通道ID.</param>
-        /// <param name="userPtr">通道指针.</param>
-        /// <param name="_frameType">帧数据类型.</param>
-        /// <param name="pBuf">数据指针.</param>
-        /// <param name="_frameInfo">帧数据结构体.</param>
+        /// <param name="channelId">Channel ID, EasyPlayer_OpenStream function return value. Channel ID.</param>
+        /// <param name="userPtr">channel pointer.</param>
+        /// <param name="_frameType">Frame data type.</param>
+        /// <param name="pBuf">data pointer.</param>
+        /// <param name="_frameInfo">frame data structure.</param>
         /// <returns>System.Int32.</returns>
         public delegate int MediaSourceCallBack(int _channelId, IntPtr _channelPtr, int _frameType, IntPtr pBuf, ref EASY_FRAME_INFO _frameInfo);
 
         /// <summary>
-        /// EasyPlayer初始化.
+        /// EasyPlayer initialization.
         /// </summary>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_Init@@YAHPAD@Z")]
         public static extern int EasyPlayer_Init(string key = "6D75724D7A4969576B5A7341706B56666F4C705A3065314659584E35556C525455454E73615756756443356C6547556A567778576F502F522F32566863336B3D");
 
         /// <summary>
-        /// 资源释放.
+        /// Resource release.
         /// </summary>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.StdCall, EntryPoint = "?EasyPlayer_Release@@YAXXZ")]
         public static extern void EasyPlayer_Release();
 
         /// <summary>
-        /// 开始进行流播放.
+        /// Start streaming.
         /// </summary>
-        /// <param name="url">媒体地址.</param>
-        /// <param name="hWnd">窗口句柄.</param>
-        /// <param name="renderFormat">编码格式.</param>
-        /// <param name="rtpovertcp">拉取流的传输模式，0=udp,1=tcp.</param>
+        /// <param name="url">Media address.</param>
+        /// <param name="hWnd">window handle.</param>
+        /// <param name="renderFormat">Encoding format.</param>
+        /// <param name="rtpovertcp">The transmission mode of the pull stream, 0=udp, 1=tcp.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        /// <param name="userPtr">用户自定义指针.</param>
-        /// <param name="callback">数据回调.</param>
-        /// <param name="bHardDecode">硬件解码1=是，0=否.</param>
-        /// <param name="startTime">回放开始时间,直播流填null.</param>
-        /// <param name="endTime">回放结束时间，直播流填null.</param>
-        /// <param name="fScale">回放倍率，直播流无效.</param>
+        /// <param name="userPtr">User defined pointer.</param>
+        /// <param name="callback">Data callback.</param>
+        /// <param name="bHardDecode">Hardware decoding 1=yes, 0=no.</param>
+        /// <param name="startTime">Playback start time, fill in null for live stream.</param>
+        /// <param name="endTime">Playback end time, the live stream is filled in null.</param>
+        /// <param name="fScale">Playback magnification, live stream is invalid.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_OpenStream@@YAHPBDPAUHWND__@@W4__RENDER_FORMAT@@H00P6GHHPAHHPADPAUtagEASY_FRAME_INFO@@@ZPAX_N44M@Z")]
-        
-       //?EasyPlayer_OpenStream@@YAHPBDPAUHWND__@@W4__RENDER_FORMAT@@H00P6GHHPAHHPADPAURTSP_FRAME_INFO@@@ZPAX_N44M@Z
         public static extern int EasyPlayer_OpenStream(string url, IntPtr hWnd, RENDER_FORMAT renderFormat, int rtpovertcp, string username, string password, MediaSourceCallBack callback, IntPtr userPtr, bool bHardDecode = true, string startTime = null, string endTime = null, float fScale = 1.0f);
 
         /// <summary>
         /// Easies the player_ close stream.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, EasyPlayer_OpenStream function return value.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_CloseStream@@YAXH@Z")]
         public static extern int EasyPlayer_CloseStream(int channelId);
 
         /// <summary>
-        /// 设置当前流播放缓存帧数.
+        /// Set the number of buffered frames for the current stream playback.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="cache">缓存的视频帧数.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="cache">Number of cached video frames.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetFrameCache@@YAHHH@Z")]
         public static extern int EasyPlayer_SetFrameCache(int channelId, int cache);
 
         /// <summary>
-        /// 播放器按比例进行显示.
+        /// The player displays proportionally.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="shownToScale">0=整个窗口区域显示，1=按比例显示.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="shownToScale">0=Display the entire window area, 1=Display proportionally.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetShownToScale@@YAHHH@Z")]
         public static extern int EasyPlayer_SetShownToScale(int channelId, int shownToScale);
 
         /// <summary>
-        /// 设置解码类型
+        /// Set decoding type
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值</param>
-        /// <param name="decodeKeyframeOnly">0=所有帧解码，1=只解码关键帧.</param>
+        /// <param name="channelId">Channel ID, EasyPlayer_OpenStream function return value.</param>
+        /// <param name="decodeKeyframeOnly">0=decode all frames, 1=decode only keyframes.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetDecodeType@@YAHHH@Z")]
         public static extern int EasyPlayer_SetDecodeType(int channelId, int decodeKeyframeOnly);
 
         /// <summary>
-        /// 设置视频显示时渲染区域.
+        /// Set the rendering area when the video is displayed.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="lpSrcRect">设置渲染区域的矩形结构体.</param>
+        /// <param name="channelId">Channel ID, EasyPlayer_OpenStream function return value.</param>
+        /// <param name="lpSrcRect">Set the rectangular structure of the rendering area.</param>
         /// <returns>System.Int32.</returns>
         public static int EasyPlayer_SetRenderRect(int channelId, Rect lpSrcRect)
         {
@@ -198,51 +196,51 @@ namespace EasyPlayerNetSDK
         }
 
         /// <summary>
-        /// 设置视频显示时渲染区域.
+        /// Set the rendering area when the video is displayed.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="lpSrcRect">设置渲染区域的矩形结构体.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="lpSrcRect">Sets the rectangular structure of the rendering area.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetRenderRect@@YAHHPAUtagRECT@@@Z")]
         private static extern int EasyPlayer_SetRenderRect(int channelId, IntPtr lpSrcRect);
 
         /// <summary>
-        /// 设置是否显示码流信息.
+        /// Set whether to display code stream information.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="show">0=不显示，1=显示</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="show">0=Do not display, 1=Display</param>
         /// <returns></returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_ShowStatisticalInfo@@YAHHH@Z")]
         public static extern int EasyPlayer_ShowStatisticalInfo(int channelId, int show);
 
         /// <summary>
-        /// 开始播放音频.
+        /// Start playing audio.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_PlaySound@@YAHH@Z")]
         public static extern int EasyPlayer_PlaySound(int channelId);
 
         /// <summary>
-        /// 停止播放音频.
+        /// Stop playing audio.
         /// </summary>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_StopSound@@YAHXZ")]
         public static extern int EasyPlayer_StopSound();
 
         /// <summary>
-        /// 截图,当前[2017/11/29]仅支持YUV2编码格式下截图
+        /// Screenshots, currently [2017/11/29] only supports screenshots in YUV2 encoding format
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="shotPath">默认程序路径下shotPath文件夹</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="shotPath">shotPath folder in the default program path.</param>
         /// <returns></returns>
         public static int EasyPlayer_PicShot(int channelId, string shotPath = null)
         {
             int ret = -99;
             string path = shotPath ?? System.AppDomain.CurrentDomain.BaseDirectory + "shotPath\\";
 
-            if (!System.IO.Directory.Exists(path))//如果不存在就创建file文件夹　　             　　                
-                System.IO.Directory.CreateDirectory(path);//创建该文件夹
+            if (!System.IO.Directory.Exists(path))//Create the file folder if it does not exist　　             　　                
+                System.IO.Directory.CreateDirectory(path);//Create this folder
 
             ret = EasyPlayer_SetManuPicShotPath(channelId, path);
             ret = EasyPlayer_StartManuPicShot(channelId);
@@ -254,7 +252,7 @@ namespace EasyPlayerNetSDK
         /// <summary>
         /// Easies the player_ set manu pic shot path.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <param name="shotPath">The shot path.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetManuPicShotPath@@YAHHPBD@Z")]
@@ -263,7 +261,7 @@ namespace EasyPlayerNetSDK
         /// <summary>
         /// Easies the player_ start manu pic shot.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_StartManuPicShot@@YAHH@Z")]
         private static extern int EasyPlayer_StartManuPicShot(int channelId);
@@ -271,33 +269,33 @@ namespace EasyPlayerNetSDK
         /// <summary>
         /// Easies the player_ stop manu pic shot.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_StopManuPicShot@@YAHH@Z")]
         private static extern int EasyPlayer_StopManuPicShot(int channelId);
 
         /// <summary>
-        /// 音视频数据录制，录制格式为MP4.
+        /// Audio and video data recording, the recording format is MP4.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
-        /// <param name="recordPath">默认程序路径</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
+        /// <param name="recordPath">Default program path.</param>
         /// <returns></returns>
         public static int EasyPlayer_StartManuRecording(int channelId, string recordPath = null)
         {
             int ret = -99;
             string path = recordPath ?? System.AppDomain.CurrentDomain.BaseDirectory + "record\\";
 
-            if (!System.IO.Directory.Exists(path))//如果不存在就创建file文件夹　　             　　                
-                System.IO.Directory.CreateDirectory(path);//创建该文件夹
+            if (!System.IO.Directory.Exists(path))//Create the file folder if it does not exist　　             　　                
+                System.IO.Directory.CreateDirectory(path);//Create this folder
             ret = EasyPlayer_SetManuRecordPath(channelId, path);
             ret = EasyPlayer_StartManuRecording(channelId);
             return ret;
         }
 
         /// <summary>
-        /// 音视频数据录制，录制格式为MP4.
+        /// Audio and video data recording, the recording format is MP4.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_StartManuRecording@@YAHH@Z")]
         private static extern int EasyPlayer_StartManuRecording(int channelId);
@@ -305,16 +303,16 @@ namespace EasyPlayerNetSDK
         /// <summary>
         /// Easies the player_ set manu record path.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <param name="recordPath">The record path.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_SetManuRecordPath@@YAHHPBD@Z")]
         private static extern int EasyPlayer_SetManuRecordPath(int channelId, string recordPath);
 
         /// <summary>
-        /// 停止录制.
+        /// Stop recording.
         /// </summary>
-        /// <param name="channelId">通道ID，EasyPlayer_OpenStream函数返回值.</param>
+        /// <param name="channelId">Channel ID, return value of EasyPlayer_OpenStream function.</param>
         /// <returns>System.Int32.</returns>
         [DllImport(@"Lib\libEasyPlayer-RTSP.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "?EasyPlayer_StopManuRecording@@YAHH@Z")]
         public static extern int EasyPlayer_StopManuRecording(int channelId);
