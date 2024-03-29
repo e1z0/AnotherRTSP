@@ -21,51 +21,80 @@ namespace AnotherRTSP.Services
         private MqttClient client;
         private Thread mqttThread;
 
+        private void Connect(MqttClient client)
+        {
+            while (!client.IsConnected)
+            {
+                if (!Settings.MqttServiceRunning)
+                    break;
+                try
+                {
+                    // Attempt to connect
+                    var clientId = Guid.NewGuid().ToString();
+                    if (Settings.MqttSettings.ClientID != "")
+                        clientId = Settings.MqttSettings.ClientID;
+                    client.Connect(clientId, Settings.MqttSettings.Username, Settings.MqttSettings.Password);
+                    // If connected successfully, subscribe to topics, publish messages, etc.
+                    if (client.IsConnected)
+                    {
+                        Logger.WriteLog("Connected to MQTT server at: {0}:{1}", Settings.MqttSettings.Server, Settings.MqttSettings.Port);
+                        foreach (MqttRulesDefinition rule in Settings.MqttRulesSettings)
+                        {
+                            if (rule != null && rule.Topic != "")
+                            {
+                                Logger.WriteLog("MQTT Subscribing to topic: {0}", rule.Topic);
+                                client.Subscribe(new string[] { rule.Topic },
+                            new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Handle connection error
+                    Logger.WriteLog("Unable to connect to MQTT server at: {0}:{1} error: {2}", Settings.MqttSettings.Server, Settings.MqttSettings.Port, ex.Message);
+                }
+
+ 
+
+                // If connection failed, wait for a while before attempting to reconnect
+                if (!client.IsConnected)
+                {
+                    Thread.Sleep(5000); // Wait for 5 seconds before retrying
+                    Logger.WriteLog("MQTT Not connected...");
+                }
+            }
+        }
+
         private void ServiceStart()
         {
             Logger.WriteLog("Mqtt service Thread is running...");
 
 
             client = new MqttClient(Settings.MqttSettings.Server, Settings.MqttSettings.Port, false, null, null, MqttSslProtocols.None);
-            
 
             // register handler to a received message
             client.MqttMsgPublishReceived += MqttMsgPublishReceived;
             client.ConnectionClosed += OnDisconnect;
-         
-            var clientId = Guid.NewGuid().ToString();
-            if (Settings.MqttSettings.ClientID != "")
-                clientId = Settings.MqttSettings.ClientID;
-            try
-            {
-                client.Connect(Settings.MqttSettings.ClientID,Settings.MqttSettings.Username,Settings.MqttSettings.Password);
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog("Unable to connect to MQTT server at: {0}:{1} error: {2}", Settings.MqttSettings.Server, Settings.MqttSettings.Port,ex.Message);
-            }
-            Settings.MqttServiceRunning = true;
 
-            if (client.IsConnected)
-            {
-                Logger.WriteLog("Connected to MQTT server at: {0}:{1}", Settings.MqttSettings.Server, Settings.MqttSettings.Port);
-                foreach (MqttRulesDefinition rule in Settings.MqttRulesSettings)
-                {
-                    if (rule != null && rule.Topic != "")
-                        client.Subscribe(new string[] { rule.Topic },
-                    new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                }
-            }
+            Connect(client);
+                
+            Settings.MqttServiceRunning = true;
 
             while (mqttThread.ThreadState == ThreadState.Running)
             {
                 Thread.Sleep(500);
             }
+            Logger.WriteLog("MQTT Service finished work");
         }
 
-        private static void OnDisconnect(object sender, EventArgs e)
+        private void OnDisconnect(object sender, EventArgs e)
         {
             Logger.WriteLog("MQTT Server disconnected...");
+            // Attempt to reconnect
+            MqttClient cl = (MqttClient)sender;
+            if (cl != null)
+                Connect(cl);
         }
 
 
