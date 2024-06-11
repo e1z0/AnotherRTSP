@@ -357,14 +357,21 @@ namespace AnotherRTSP.Classes
         {
             if (state)
             {
-                frm.WindowState = FormWindowState.Normal;
+                frm.Size = new Size(WWidth, WHeight);
+                frm.Location = new Point(WX, WY);
                 FullScreen = false;
                 if (InvalidResolution())
                     PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, LastStrechState ? 1 : 0);
             }
             else
-            {           
-                frm.WindowState = FormWindowState.Maximized;
+            {
+                Screen screen = Screen.FromControl(frm);
+                Rectangle workingArea = screen.WorkingArea;
+                frm.Size = workingArea.Size;
+                frm.Location = new Point(
+                    workingArea.Left + (workingArea.Width - frm.Width) / 2,
+                    workingArea.Top + (workingArea.Height - frm.Height) / 2
+                );
                 FullScreen = true;
                 if (InvalidResolution())
                     PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
@@ -417,7 +424,7 @@ namespace AnotherRTSP.Classes
             MouseEventArgs mouseEvent = e as MouseEventArgs;
             if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
             {
-                if (Settings.Advanced.FocusAllWindowsOnClick && cameraForm.WindowState != FormWindowState.Maximized)
+                if (Settings.Advanced.FocusAllWindowsOnClick && !FullScreen)
                 {
                     // Get all open forms and bring each one to the front
                     foreach (Form form in Application.OpenForms)
@@ -451,7 +458,7 @@ namespace AnotherRTSP.Classes
         {
             if (!FormLock)
             {
-                if (isMoving)
+                if (!FullScreen && isMoving)
                 {
                     Logger.WriteDebug("Camera window is moving");
                     if (sender is Form)
@@ -470,6 +477,7 @@ namespace AnotherRTSP.Classes
                         }
 
                     }
+                    UpdateWindowSpecs();
                 }
             }
         }
@@ -522,7 +530,7 @@ namespace AnotherRTSP.Classes
 
         public void UpdateWindowSpecs()
         {
-            if (cameraForm != null)
+            if (cameraForm != null && !FullScreen)
             {
                 WX = cameraForm.Location.X;
                 WY = cameraForm.Location.Y;
