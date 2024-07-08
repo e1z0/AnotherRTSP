@@ -14,12 +14,8 @@ export ICON_PATH="icons/256.png"
 export DESKTOP_FILE="${APP_NAME}.desktop"
 export APPIMAGE_TOOL=appimagetool-x86_64.AppImage
 
-# Create Wine prefix
-export WINEPREFIX="$WINEPREFIX"
-winecfg
-
 # Install .NET using Winetricks
-winetricks dotnet40
+winetricks win7 dotnet40
 
 # Create AppImage directory structure
 mkdir -p "${APP_DIR}/usr/bin"
