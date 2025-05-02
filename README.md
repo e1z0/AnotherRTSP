@@ -79,6 +79,15 @@ Currently supported features list:
 * Windows 10
 * Windows 11
 
+# License
+
+AnotherRTSP is licensed under the [Business Source License 1.1](https://mariadb.com/bsl11/).
+
+- Free for personal, educational, and research purposes.
+- Commercial use requires a separate commercial license.
+
+For details, see [LICENSE](./LICENSE).
+
 # Third party Components used
 
 * EasyPlayerRTSP Libraries https://github.com/tsingsee/EasyPlayer-RTSP-Win
