@@ -68,3 +68,5 @@ Src/EasyPlayerNetSDK/obj
 dist
 Src/.vs
 todo.md
+testing/
+icons/additional

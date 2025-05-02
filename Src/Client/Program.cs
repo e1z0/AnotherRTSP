@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2024 e1z0. All Rights Reserved.
+ * Licensed under MIT license.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,17 +34,17 @@ namespace AnotherRTSP
             using (Stream stream = assembly.GetManifestResourceStream("AnotherRTSP.version.info"))
             using (StreamReader reader = new StreamReader(stream))
             {
-                Settings.VERSION = reader.ReadToEnd();
+                YmlSettings.VERSION = reader.ReadToEnd();
             }
             // Enable visual styles and set text rendering default
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.ApplicationExit += Application_ApplicationExit;
             // Load settings
-            Settings.Load();
+            YmlSettings.Load();
 
             // Check for first run
-            if (Settings.FirstRun)
+            if (YmlSettings.Data.FirstRun)
             {
                 Application.Run(new FirstRun());
                 return;
@@ -47,24 +52,25 @@ namespace AnotherRTSP
 
 
             // Initialize MQTT service and UI
-            if (Settings.CustomLayout > 0)
+            if (YmlSettings.Data.CustomLayout)
             {
                 CustomUI ui = new CustomUI();
                 ui.Init();
 
                 // Start Log service if enabled
-                if (Settings.Logging > 0 && Settings.LogWindow > 0)
+                if (YmlSettings.Data.Logging && YmlSettings.Data.LogWindow)
                 {
                     logService = new LogForm();
                     logService.Show();
                 }
 
                 // Start MQTT service if enabled
-                if (Settings.MqttEnabled > 0)
+                if (YmlSettings.Data.MqttEnabled)
                 {
-                    mqttService = new MqttService();
+                    mqttService = MqttService.Instance;
                     mqttService.StartService();
                 }
+                Scripting.LuaManager.Initialize();
                 Application.Run();
             }
             else
@@ -75,13 +81,19 @@ namespace AnotherRTSP
 
 
         // application exit event, we should stop all threads on this event
-        static void Application_ApplicationExit(object sender, EventArgs e)
+        public static void Application_ApplicationExit(object sender, EventArgs e)
         {
-            Settings.Save();
+            foreach (Camera cam in Camera.AllCameras)
+            {
+                cam.UpdateConfigFromForm();
+            }
+            YmlSettings.Save();
+
+            Scripting.LuaManager.Shutdown();
+
             if (mqttService != null)
             {
-                mqttService.StopService(); // Stop MQTT service
-                mqttService.WaitForCompletion(); // Wait for MQTT service to stop
+                MqttService.Instance.StopService();
             }
             if (logService != null)
             {
@@ -90,7 +102,6 @@ namespace AnotherRTSP
             }
             // clean exit
             Logger.WriteLog("Program gracefully closed!");
-            Application.Exit();
         }
 
         // for some reason i left it, maybe it be useful someday

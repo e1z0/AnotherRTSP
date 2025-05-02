@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2024 e1z0. All Rights Reserved.
+ * Licensed under MIT license.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

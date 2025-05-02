@@ -1,430 +1,221 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using EasyPlayerNetSDK;
-using AnotherRTSP.Classes;
-using System.Media;
-using AnotherRTSP.Services;
-using System.Reflection;
+﻿/*
+ * Copyright (c) 2024 e1z0. All Rights Reserved.
+ * Licensed under MIT license.
+ */
+using System;
 using System.Drawing;
+using System.Windows.Forms;
+using AnotherRTSP.Classes;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using EasyPlayerNetSDK;
+using System.Linq;
 using System.IO;
-using AnotherRTSP.Components;
-using System.Diagnostics;
-using System.Timers;
-using System.Threading;
+using System.Reflection;
 
-namespace AnotherRTSP.Classes
+namespace AnotherRTSP
 {
-    public class Camera
+    public class Camera : Form
     {
-        // object definitions
-        public int Id { get; set; }
-        public int ChannelID { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
-        public int WWidth { get; set; }
-        public int WHeight { get; set; }
-        public int WX { get; set; }
-        public int WY { get; set; }
-        public bool Disabled { get; set; }
-        public bool SoundEnabled { get; set; }
-        public bool FullScreen { get; set; }
-        public bool LastStrechState { get; set; }
-        public bool Recording { get; set; }
-        public ContextMenuStrip contextMenu { get; set; }
+        public CameraItem Config { get; private set; }
+        public static List<Camera> AllCameras = new List<Camera>();
+        public static List<Camera> ActiveCameras = new List<Camera>();
 
-        // variables
-        private static int NextId = 1;
-        // for show tooltips on camera windows
-        private int mouseEnterCount = 0;
-        // libEasyPlayer SDK settings FIXME should be moved to configuration
+
+        public int ChannelID;
+        private PlayerSdk.MediaSourceCallBack callback;
+        private PlayerSdk.RENDER_FORMAT RENDER_FORMAT = PlayerSdk.RENDER_FORMAT.DISPLAY_FORMAT_RGB24_GDI;
         private bool isTCP = true;
         private bool isHardEncode = false;
         private int streamCache = 3;
-        private PlayerSdk.MediaSourceCallBack callBack = null;
-        private PlayerSdk.RENDER_FORMAT RENDER_FORMAT = PlayerSdk.RENDER_FORMAT.DISPLAY_FORMAT_RGB24_GDI;
-        // camera menus and items
-        public ToolStripMenuItem camMenuItem = new ToolStripMenuItem();
-        public ToolStripMenuItem recordMenuItem = new ToolStripMenuItem();
-        public ToolStripMenuItem enableSoundMenuItem = new ToolStripMenuItem();
-        // window resize and move variables
-        private int movX, movY;
-        private bool isMoving;
-        private bool FormLock; 
+        private bool FullScreen = false;
 
-        private Form cameraForm;
+        private Label camLabel; // camera label on top of left corner
 
-        // new object
-        public Camera(string name, int width, int height, int winx, int winy, string url, bool disabled)
+        // resizable window
+        private const int HTLEFT = 10;
+        private const int HTRIGHT = 11;
+        private const int HTTOP = 12;
+        private const int HTTOPLEFT = 13;
+        private const int HTTOPRIGHT = 14;
+        private const int HTBOTTOM = 15;
+        private const int HTBOTTOMLEFT = 16;
+        private const int HTBOTTOMRIGHT = 17;
+        private const int WM_NCHITTEST = 0x84;
+        private const int HTCLIENT = 1;
+        private const int HTCAPTION = 2;
+        private const int WM_GETMINMAXINFO = 0x24;
+        private const int WM_LBUTTONDBLCLK = 0x0203;
+
+
+        public Camera(CameraItem config)
         {
-            Name = name;
-            Id = NextId++;
-            WWidth = width;
-            WHeight = height;
-            WX = winx;
-            WY = winy;
-            Url = url;
-            Disabled = disabled;
-        }
-
-        public void DisableCamera()
-        {
-            Disabled = true;
-            CloseCamera();
-        }
-
-        public void EnableCamera()
-        {
-            Disabled = false;
-            SpawnCameraWindow();
-        }
-
-        public void CloseCamera()
-        {
-            try
+            this.Config = config;
+            this.Text = config.Name;
+            // Load icon from embedded resource
+            Icon icon;
+            using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AnotherRTSP.Images.camera_64.ico"))
             {
-                if (SoundEnabled)
+                icon = new Icon(iconStream);
+            }
+            this.Icon = icon;
+            this.Width = config.WWidth;
+            this.Height = config.WHeight;
+            this.StartPosition = FormStartPosition.Manual;
+            //this.Location = new Point(config.WX, config.WY);
+            // new implementation checks if it's primary screen, also checks the resolution, if the resolution is lower than saved one, realigns the windows to be in the correct place
+            this.Location = ClampToVisibleScreen(new Point(config.WX, config.WY), new Size(config.WWidth, config.WHeight));
+
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.BackColor = Color.Black;
+            this.ShowInTaskbar = false;
+            this.TopMost = YmlSettings.Data.AdvancedSettings.AllCamerasWindowsOnTop;
+            this.ContextMenuStrip = TrayIconManager.GetSharedMenu(); // reuse the tray menu
+
+
+            this.KeyDown += CameraKeyDown;
+            this.MouseDown += CameraMouseDown;
+            this.MouseMove += CameraMouseMove;
+            this.MouseUp += CameraMouseUp;
+            this.MouseDoubleClick += CameraDoubleClick;
+            this.FormClosing += CameraClosing;
+            this.MouseEnter += CameraMouseEnter;
+
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.DoubleBuffered = true;
+
+            // Transparent background camera label
+            camLabel = new Label();
+            camLabel.Text = Config.Name;
+            camLabel.Font = new Font("Arial", 12, FontStyle.Bold);
+            camLabel.ForeColor = Color.White;
+            camLabel.AutoSize = true;
+            camLabel.Location = new Point(5, 5);
+            camLabel.Visible = false;
+            camLabel.BackColor = Color.Transparent;
+
+            this.Controls.Add(camLabel);
+            this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            this.DoubleBuffered = true;
+            camLabel.BringToFront();
+
+            AllCameras.Add(this);
+
+            callback = new PlayerSdk.MediaSourceCallBack(MediaCallback);
+            ChannelID = PlayerSdk.EasyPlayer_OpenStream(
+                Config.Url,
+                this.Handle,
+                RENDER_FORMAT,
+                isTCP ? 1 : 0,
+                "", "", callback,
+                IntPtr.Zero,
+                isHardEncode
+            );
+
+            if (ChannelID > 0)
+            {
+                PlayerSdk.EasyPlayer_SetFrameCache(ChannelID, streamCache);
+                PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
+            }
+            this.Show();
+        }
+
+        private Point ClampToVisibleScreen(Point desiredLocation, Size windowSize)
+        {
+            foreach (var screen in Screen.AllScreens)
+            {
+                Rectangle bounds = screen.WorkingArea;
+                Rectangle windowRect = new Rectangle(desiredLocation, windowSize);
+
+                if (bounds.Contains(windowRect))
+                    return desiredLocation;
+            }
+
+            // If not fully contained in any screen, adjust to primary screen
+            var primary = Screen.PrimaryScreen.WorkingArea;
+            int x = Math.Max(primary.Left, Math.Min(desiredLocation.X, primary.Right - windowSize.Width));
+            int y = Math.Max(primary.Top, Math.Min(desiredLocation.Y, primary.Bottom - windowSize.Height));
+
+            return new Point(x, y);
+        }
+
+
+        public static void EnableCamera(CameraItem item)
+        {
+            if (!AllCameras.Any(c => c.Config == item))
+            {
+                Camera cam = new Camera(item);
+                item.Disabled = false;
+            }
+        }
+
+        public static void DisableCamera(CameraItem item)
+        {
+            var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+            if (cam != null)
+            {
+                cam.Close();
+                item.Disabled = true;
+            }
+        }
+
+        public static void ResetCamera(CameraItem item)
+        {
+            var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+            if (cam != null)
+            {
+                cam.Location = new Point(0, 0);
+                cam.Size = new Size(300, 200);
+                cam.Config.WX = 0;
+                cam.Config.WY = 0;
+                cam.Config.WWidth = 300;
+                cam.Config.WHeight = 200;
+            }
+        }
+
+        public static void ToggleRecording(CameraItem item, ToolStripMenuItem menu)
+        {
+            var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+            if (cam != null)
+            {
+                if (menu.Checked)
+                    PlayerSdk.EasyPlayer_StartManuRecording(cam.ChannelID);
+                else
+                    PlayerSdk.EasyPlayer_StopManuRecording(cam.ChannelID);
+            }
+        }
+
+        public static void Stop(CameraItem item)
+        {
+            var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+            if (cam != null)
+            {
+                PlayerSdk.EasyPlayer_CloseStream(cam.ChannelID);
+            }
+        }
+
+        public static void ToggleSound(CameraItem item, ToolStripMenuItem menu)
+        {
+            var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+            if (cam != null)
+            {
+                if (menu.Checked)
+                    PlayerSdk.EasyPlayer_PlaySound(cam.ChannelID);
+                else
                     PlayerSdk.EasyPlayer_StopSound();
-                PlayerSdk.EasyPlayer_CloseStream(ChannelID);
-                if (cameraForm != null)
-                {
-                    cameraForm.Close();
-                    cameraForm.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog("Error at Camera object CloseCamera() func: {0}", ex.StackTrace.ToString());
             }
         }
 
-        public void SetFormSize(int width, int height)
+        private int MediaCallback(int _channelId, IntPtr _channelPtr, int _frameType, IntPtr pBuf, ref PlayerSdk.EASY_FRAME_INFO _frameInfo)
         {
-            if (cameraForm != null)
-            {
-                cameraForm.Size = new System.Drawing.Size(width, height);
-            }
+            return 0;
         }
 
-        public void SetFormLocation(int x, int y)
+        private void CameraMouseDown(object sender, MouseEventArgs e)
         {
-            if (cameraForm != null)
+            if (e.Button == MouseButtons.Left)
             {
-                cameraForm.SetDesktopLocation(x, y);
-            }
-        }
-
-        private void StopSounds()
-        {
-            SoundEnabled = false;
-            PlayerSdk.EasyPlayer_StopSound();
-            CustomUI.UncheckMenuItems("Sound");
-        }
-
-        public ToolStripMenuItem ReturnMenuItem()
-        {
-            camMenuItem.Text = Name;
-            camMenuItem.Checked = !Disabled;
-
-            camMenuItem.Click += (sender, e) =>
-            {
-                ToolStripMenuItem obj = sender as ToolStripMenuItem;
-                if (obj != null)
-                {
-                    if (obj.Checked)
-                    {
-                        // disable
-                        DisableCamera();
-                        obj.Checked = false;
-                        recordMenuItem.Enabled = false;
-                        enableSoundMenuItem.Enabled = false;
-
-                    }
-                    else
-                    {
-                        // enable
-                        EnableCamera();
-                        obj.Checked = true;
-                        recordMenuItem.Enabled = true;
-                        enableSoundMenuItem.Enabled = true;
-                    }
-                }
-            };
-            // add subitems
-            // camera record menu item 
-            recordMenuItem.Text = "Record";
-            recordMenuItem.Checked = Recording;
-            recordMenuItem.Enabled = !Disabled;
-            recordMenuItem.Click += (sender, e) =>
-            {
-                ToolStripMenuItem obj = sender as ToolStripMenuItem;
-                if (obj != null)
-                {
-                    if (obj.Checked)
-                    {
-                        obj.Checked = false;
-                        PlayerSdk.EasyPlayer_StopManuRecording(ChannelID);
-                        
-                    }
-                    else
-                    {
-                        obj.Checked = true;
-                        PlayerSdk.EasyPlayer_StartManuRecording(ChannelID);
-                    }
-
-                }
-            };
-            camMenuItem.DropDownItems.Add(recordMenuItem);
-            // camera sound enable menu item
-            enableSoundMenuItem.Text = "Sound";
-            enableSoundMenuItem.Checked = SoundEnabled;
-            enableSoundMenuItem.Enabled = !Disabled;
-            enableSoundMenuItem.Click += (sender, e) =>
-            {
-                ToolStripMenuItem obj = sender as ToolStripMenuItem;
-                if (obj != null)
-                {
-                    if (obj.Checked)
-                    {
-                        obj.Checked = false;
-                        StopSounds();
-                    }
-                    else
-                    {
-                        obj.Checked = true;
-                        SoundEnabled = true;
-                        PlayerSdk.EasyPlayer_PlaySound(ChannelID);
-                    }
-                }
-            };
-            camMenuItem.DropDownItems.Add(enableSoundMenuItem);
-            return camMenuItem;
-        }
-
-        public void SpawnCameraWindow()
-        {
-            if (!Disabled)
-            {
-                cameraForm = new Form();                
-                // Load icon from embedded resource
-                Icon icon;
-                using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AnotherRTSP.Images.camera_64.ico"))
-                {
-                    icon = new Icon(iconStream);
-                }
-                cameraForm.Icon = icon;
-                cameraForm.ContextMenuStrip = contextMenu;
-                cameraForm.ShowInTaskbar = false;
-                cameraForm.BackColor = Color.Black;
-                cameraForm.FormBorderStyle = FormBorderStyle.None;
-                if (Settings.Advanced.AllCamerasWindowsOnTop)
-                    cameraForm.TopMost = true;
-
-
-                cameraForm.Click += CameraClick;
-
-                cameraForm.FormClosing += (sender, e) =>
-                {
-                    UpdateWindowSpecs();
-                };
-
-
-                // camera label on the window
-                Label camLabel = new Label();
-                camLabel.Text = Name;
-                camLabel.Font = new Font(camLabel.Font.FontFamily, 16);
-                camLabel.AutoSize = true;
-                camLabel.BorderStyle = BorderStyle.None;
-                camLabel.ForeColor = Color.White;
-                camLabel.BackColor = System.Drawing.Color.Transparent; //Initial color with full transparency, why not full? lets examine it later
-                camLabel.Tag = "";
-                camLabel.Visible = false;
-                if (!Settings.Advanced.DisableCameraCaptions)
-                {
-                    if (Settings.Advanced.StaticCameraCaption)
-                        camLabel.Visible = true;
-                    else
-                        camLabel.Visible = false;
-                }
-
-                camLabel.Click += (sender, e) => {
-                    Label lbl = sender as Label;
-                    if (lbl != null)
-                    {
-                        Logger.WriteDebug("camera label click");
-                        Form frm = lbl.Parent as Form;
-                        if (frm != null)
-                            CameraFullScreen(frm, FullScreen);
-                    }
-                };
-
-
-
-                cameraForm.Controls.Add(camLabel);
-
-
-                cameraForm.MouseEnter += (sender, e) =>
-                {
-                    mouseEnterCount++;
-                    Form frm = sender as Form;
-                    if (frm != null)
-                    {
-                        Label camLbl = frm.Controls[0] as Label;
-                        if (camLbl != null)
-                        {
-                            if (mouseEnterCount == 1 && camLbl.Tag.ToString() == "" && !Settings.Advanced.StaticCameraCaption && !Settings.Advanced.DisableCameraCaptions)
-                            {
-                                camLbl.Tag = "lock";
-                                camLbl.BringToFront();
-                                // reset colors
-                                camLbl.ForeColor = Color.White;
-                                camLbl.BackColor = Color.Transparent;
-                                camLbl.Visible = true;
-                                CameraLabelFadeOut(camLbl, frm);
-                            }
-                        }
-
-                    }
-                };
-
-                cameraForm.MouseLeave += (sender, e) =>
-                {
-                    mouseEnterCount = 0;
-
-                };
-
-                // bind keydown events
-                cameraForm.KeyDown += CameraKeyDown;
-                // detect which window is focused
-                //cameraForm.GotFocus += (sender, e) => {
-                //};
-                // Enable moving windows on mouse click
-                cameraForm.MouseDown += CameraMouseDown;
-                // mouse move event
-                cameraForm.MouseMove += CameraMouseMove;
-                // mouse button up event
-                cameraForm.MouseUp += CameraMouseUp;
-                // end of enabling windows movement on mouse click
-
-                cameraForm.DoubleClick += new EventHandler(CameraDoubleClick);
-                cameraForm.Tag = Id;
-                cameraForm.Text = Name;
-                callBack = new PlayerSdk.MediaSourceCallBack(MediaCallback);
-                ChannelID = PlayerSdk.EasyPlayer_OpenStream(Url, cameraForm.Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
-                if (ChannelID > 0)
-                {
-                    PlayerSdk.EasyPlayer_SetFrameCache(ChannelID, streamCache);
-                    LastStrechState = true;
-                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
-                }
-                cameraForm.Show();
-                Win32Func.MoveWindow(cameraForm.Handle, WX, WY, WWidth, WHeight, true);
-            }
-        }
-
-        private bool InvalidResolution()
-        {
-            bool badresolution = false;
-            Screen primaryScreen = Screen.PrimaryScreen;
-            var aspect = (float)primaryScreen.Bounds.Width / primaryScreen.Bounds.Height;
- 
-            switch (primaryScreen.Bounds.Height)
-            {
-                case 600:
-                    badresolution = true;
-                    break;
-                case 720:
-                    badresolution = true;
-                    break;
-                case 768:
-                    badresolution = true;
-                    break;
-                case 800:
-                    badresolution = true;
-                    break;
-                default:
-                    badresolution = false;
-                    break;
-            }
-
-            Logger.WriteDebug("Detected aspect ratio: {0} working area: {1} bounds: {2} Bad resolution: {3}", aspect, primaryScreen.WorkingArea, primaryScreen.Bounds, badresolution);
-            return badresolution;
-        }
-
-        private void CameraFullScreen(Form frm, bool state)
-        {
-            if (state)
-            {
-                frm.Size = new Size(WWidth, WHeight);
-                frm.Location = new Point(WX, WY);
-                FullScreen = false;
-                if (InvalidResolution())
-                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, LastStrechState ? 1 : 0);
-            }
-            else
-            {
-                Screen screen = Screen.FromControl(frm);
-                Rectangle workingArea = screen.WorkingArea;
-                frm.Size = workingArea.Size;
-                frm.Location = new Point(
-                    workingArea.Left + (workingArea.Width - frm.Width) / 2,
-                    workingArea.Top + (workingArea.Height - frm.Height) / 2
-                );
-                FullScreen = true;
-                if (InvalidResolution())
-                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
-            }
-        }
-
-        /*
-        private void CameraBackToNormal(Form frm)
-        {
-            frm.WindowState = FormWindowState.Normal;
-            FullScreen = false;
-        }
-         */
-
-        // full screen on window
-        private void CameraDoubleClick(object sender, EventArgs e)
-        {
-            Logger.WriteDebug("Camera window double click");
-            FormLock = true;
-            Form frm = sender as Form;
-            if (frm != null)
-                CameraFullScreen(frm, FullScreen);
-            FormLock = false;
-        }
-
-        public static void CameraKeyDown(object sender, KeyEventArgs e)
-        {
-            Form frm = sender as Form;
-
-            if (e.KeyCode == Keys.Up)
-            {
-                frm.Height -= Settings.Advanced.ResizeWindowBy;
-            }
-            else if (e.KeyCode == Keys.Down)
-            {
-                frm.Height += Settings.Advanced.ResizeWindowBy;
-            }
-            else if (e.KeyCode == Keys.Left)
-            {
-                frm.Width -= Settings.Advanced.ResizeWindowBy;
-            }
-            else if (e.KeyCode == Keys.Right)
-            {
-                frm.Width += Settings.Advanced.ResizeWindowBy;
-            }
-        }
-
-        private void CameraClick(object sender, EventArgs e)
-        {
-            MouseEventArgs mouseEvent = e as MouseEventArgs;
-            if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
-            {
-                if (Settings.Advanced.FocusAllWindowsOnClick && !FullScreen)
+                if (YmlSettings.Data.AdvancedSettings.FocusAllWindowsOnClick && !FullScreen)
                 {
                     // Get all open forms and bring each one to the front
                     foreach (Form form in Application.OpenForms)
@@ -432,121 +223,245 @@ namespace AnotherRTSP.Classes
                         form.Focus();
                     }
                 }
+                    ReleaseCapture();
+                    SendMessage(this.Handle, 0xA1, HTCAPTION, 0);
             }
-            FormLock = true;
-        }
-
-        private void CameraMouseDown(object sender, MouseEventArgs e)
-        {
-            // Assign this method to mouse_Down event of Form or Panel,whatever you want
-            if (!FormLock)
-            {
-                if (e != null && e.Button == MouseButtons.Left && e.Clicks == 1)
-                {
-                    Logger.WriteDebug("Camera window mouse down");
-                    isMoving = true;
-                    movX = e.X;
-                    movY = e.Y;
-                }
-                if (Control.MouseButtons == MouseButtons.Right)
-                    isMoving = false;
-            }
-             
+   
         }
 
         private void CameraMouseMove(object sender, MouseEventArgs e)
         {
-            if (!FormLock)
-            {
-                if (!FullScreen && isMoving)
-                {
-                    Logger.WriteDebug("Camera window is moving");
-                    if (sender is Form)
-                    {
-                        Form frm = (Form)sender;
-                        if (frm != null)
-                            frm.SetDesktopLocation(Control.MousePosition.X - movX, Control.MousePosition.Y - movY);
-                    }
-                    else
-                    {
-                        Control control = sender as Control;
-                        if (control != null)
-                        {
-                            Form parentForm = control.FindForm();
-                            parentForm.SetDesktopLocation(Control.MousePosition.X - movX, Control.MousePosition.Y - movY);
-                        }
-
-                    }
-                    UpdateWindowSpecs();
-                }
-            }
         }
 
         private void CameraMouseUp(object sender, MouseEventArgs e)
         {
-            // Assign this method to Mouse_Up event of Form or Panel.
-            if (e.Button == MouseButtons.Left)
-            {
-                Logger.WriteDebug("Camera window mouse up");
-                isMoving = false;
-            }
-            FormLock = false;
         }
 
+        private void CameraKeyDown(object sender, KeyEventArgs e)
+        {
+            int delta = YmlSettings.Data.AdvancedSettings.ResizeWindowBy;
+            if (e.KeyCode == Keys.Up) this.Height -= delta;
+            if (e.KeyCode == Keys.Down) this.Height += delta;
+            if (e.KeyCode == Keys.Left) this.Width -= delta;
+            if (e.KeyCode == Keys.Right) this.Width += delta;
+        }
 
-
-
-        private void CameraLabelFadeOut(Label label, Form parent, int timeout = 2000)
+        private void CameraDoubleClick(object sender, EventArgs e)
         {
 
-            if (label.Visible)
+            if (!FullScreen)
             {
+                UpdateConfigFromForm();
+                Screen screen = Screen.FromControl(this);
+                Rectangle workingArea = screen.WorkingArea;
+                this.Size = workingArea.Size;
+                this.Location = new Point(
+                    workingArea.Left + (workingArea.Width - this.Width) / 2,
+                    workingArea.Top + (workingArea.Height - this.Height) / 2
+                );
+                FullScreen = true;
+                if (Utils.DetectInvalidResolution())
+                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
+            }
+            else
+            {
+                this.Size = new Size(Config.WWidth, Config.WHeight);
+                this.Location = new Point(Config.WX, Config.WY);
+                FullScreen = false;
+                if (Utils.DetectInvalidResolution())
+                    PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
+            }
 
-                System.Windows.Forms.Timer fadeTimer = new System.Windows.Forms.Timer();
-                fadeTimer.Interval = 1; // Adjust as needed for the desired fade speed
-                int fade = 0;
-                int r = 255, g = 255, b = 255;
-                fadeTimer.Tick += (sender, e) =>
+            /*
+                if (this.WindowState == FormWindowState.Normal)
                 {
-                    fade++;
-                    if (fade >= 200) // arbitrary duration set prior to initiating fade
+                    UpdateConfigFromForm();
+                    this.WindowState = FormWindowState.Maximized;
+                    if (Utils.DetectInvalidResolution())
+                        PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
+                    
+                    new System.Threading.Thread(() =>
                     {
-                        if (r > 0) r--; // increase r value with each tick
-                        if (g > 0) g--; // decrease g value with each tick
-                        if (b > 0) b--; // decrease b value with each tick
-                        label.ForeColor = Color.FromArgb(0, r, g, b);
-                        if (r == 0 && g == 0 && b == 0) // arrived at target values
+                        System.Threading.Thread.Sleep(500);
+                        this.Invoke((MethodInvoker)delegate
                         {
-                            fade = 0;
-                            label.Visible = false;
-                            label.Tag = "";
-                            fadeTimer.Stop();
-                        }
-                    }
+                            this.Dock = DockStyle.Fill;
+                            this.Invalidate();
+                        });
+                    }).Start();
+                     
+                }
+                else
+                {
+                    this.WindowState = FormWindowState.Normal;
+                    this.Size = new Size(Config.WWidth, Config.WHeight);
+                    this.Location = new Point(Config.WX, Config.WY);
+                    if (Utils.DetectInvalidResolution())
+                        PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
+                }
+            */
+        }
+
+        private void CameraMouseEnter(object sender, EventArgs e)
+        {
+            
+            if (!YmlSettings.Data.AdvancedSettings.StaticCameraCaption && !YmlSettings.Data.AdvancedSettings.DisableCameraCaptions)
+            {
+                camLabel.Visible = true;
+                Timer fadeTimer = new Timer();
+                fadeTimer.Interval = 3000;
+                fadeTimer.Tick += (s, args) =>
+                {
+                    camLabel.Visible = false;
+                    fadeTimer.Stop();
                 };
                 fadeTimer.Start();
             }
+             
         }
 
-        public void UpdateWindowSpecs()
+        public void UpdateConfigFromForm()
         {
-            if (cameraForm != null && !FullScreen)
+            if (this.WindowState == FormWindowState.Normal)
             {
-                WX = cameraForm.Location.X;
-                WY = cameraForm.Location.Y;
-                WHeight = cameraForm.Height;
-                WWidth = cameraForm.Width;
+                Config.WWidth = this.Width;
+                Config.WHeight = this.Height;
+                Config.WX = this.Location.X;
+                Config.WY = this.Location.Y;
             }
         }
 
-        private int MediaCallback(int _channelId, IntPtr _channelPtr, int _frameType, IntPtr pBuf, ref PlayerSdk.EASY_FRAME_INFO _frameInfo)
+        private void CameraClosing(object sender, FormClosingEventArgs e)
         {
-            //Logger.WriteLog("libEasyPlayer DEBUG: {0}, {1}", _channelId, _frameType); 
-            return 0;
+            PlayerSdk.EasyPlayer_CloseStream(ChannelID);
+            YmlSettings.UpdateCamera(this);
+            AllCameras.Remove(this);
         }
 
 
+        // this function used in settings to dinamically remove the camera
+        public static void RemoveCamera(CameraItem item)
+        {
+            // 1. Close live window if open
+            var cam = Camera.AllCameras.FirstOrDefault(c => ReferenceEquals(c.Config, item));
+            if (cam != null)
+            {
+                cam.Close();
+                Camera.AllCameras.Remove(cam);
+            }
 
- 
+            // 2. Remove from settings
+            YmlSettings.Data.Cameras.Remove(item);
+
+            // 3. Save settings
+            YmlSettings.Save();
+
+            // 4. Refresh tray menu
+            TrayIconManager.PopulateCameraList();
+        }
+
+        // this function used in settings to dinamically add the new camera
+        public static void AddCamera(CameraItem item)
+        {
+            if (item != null)
+            {
+                YmlSettings.AddCamera(item);
+                if (!item.Disabled) 
+                    Camera.EnableCamera(item);
+                TrayIconManager.PopulateCameraList();
+            }
+        }
+
+        // this function used in settings to dinamically edit the current camera
+        public static void EditCamera(CameraItem olditem, CameraItem newitem)
+        {
+            RemoveCamera(olditem);
+            AddCamera(newitem);
+        }
+
+        // win32 api call to resize and move windows
+        protected override void WndProc(ref Message m)
+        {
+            
+            // handle left mouse button double click
+            if (m.Msg == WM_LBUTTONDBLCLK)
+            {
+                CameraDoubleClick(this, EventArgs.Empty);
+                return;
+            }
+            
+            // handle resize and move
+            if (m.Msg == WM_GETMINMAXINFO)
+            {
+                MINMAXINFO mmi = (MINMAXINFO)System.Runtime.InteropServices.Marshal.PtrToStructure(m.LParam, typeof(MINMAXINFO));
+                mmi.ptMinTrackSize.x = 45; // minimum size
+                mmi.ptMinTrackSize.y = 45;
+                System.Runtime.InteropServices.Marshal.StructureToPtr(mmi, m.LParam, true);
+                return;
+            }
+
+            const int RESIZE_HANDLE_SIZE = 6;
+
+            if (m.Msg == WM_NCHITTEST)
+            {
+                base.WndProc(ref m);
+                Point screenPoint = new Point(m.LParam.ToInt32());
+                Point clientPoint = this.PointToClient(screenPoint);
+
+                if (clientPoint.Y < RESIZE_HANDLE_SIZE)
+                {
+                    if (clientPoint.X < RESIZE_HANDLE_SIZE)
+                        m.Result = (IntPtr)HTTOPLEFT;
+                    else if (clientPoint.X > this.ClientSize.Width - RESIZE_HANDLE_SIZE)
+                        m.Result = (IntPtr)HTTOPRIGHT;
+                    else
+                        m.Result = (IntPtr)HTTOP;
+                }
+                else if (clientPoint.Y > this.ClientSize.Height - RESIZE_HANDLE_SIZE)
+                {
+                    if (clientPoint.X < RESIZE_HANDLE_SIZE)
+                        m.Result = (IntPtr)HTBOTTOMLEFT;
+                    else if (clientPoint.X > this.ClientSize.Width - RESIZE_HANDLE_SIZE)
+                        m.Result = (IntPtr)HTBOTTOMRIGHT;
+                    else
+                        m.Result = (IntPtr)HTBOTTOM;
+                }
+                else if (clientPoint.X < RESIZE_HANDLE_SIZE)
+                {
+                    m.Result = (IntPtr)HTLEFT;
+                }
+                else if (clientPoint.X > this.ClientSize.Width - RESIZE_HANDLE_SIZE)
+                {
+                    m.Result = (IntPtr)HTRIGHT;
+                }
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern bool ReleaseCapture();
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public struct MINMAXINFO
+        {
+            public POINT ptReserved;
+            public POINT ptMaxSize;
+            public POINT ptMaxPosition;
+            public POINT ptMinTrackSize;
+            public POINT ptMaxTrackSize;
+        }
+        // end of resizable window
     }
 }

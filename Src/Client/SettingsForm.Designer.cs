@@ -35,6 +35,8 @@
             this.cancelbtn = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.generalTab = new System.Windows.Forms.TabPage();
+            this.button2 = new System.Windows.Forms.Button();
+            this.resetPositionsBtn = new System.Windows.Forms.Button();
             this.backupSettingsbutton4 = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -42,16 +44,12 @@
             this.LoggingcheckBox1 = new System.Windows.Forms.CheckBox();
             this.camerasTab = new System.Windows.Forms.TabPage();
             this.selectedCameraLabel = new System.Windows.Forms.Label();
-            this.cameraSourceEditBox = new System.Windows.Forms.TextBox();
-            this.cameraNameEditBox = new System.Windows.Forms.TextBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
             this.camerasListView1 = new System.Windows.Forms.ListView();
             this.cameraNameHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.cameraUrlHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.camerasListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mqttTab = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -75,7 +73,6 @@
             this.allWindowsFocus = new System.Windows.Forms.CheckBox();
             this.checkBoxLedsAlertSounds = new System.Windows.Forms.CheckBox();
             this.checkBoxLedsOnTop = new System.Windows.Forms.CheckBox();
-            this.resetPositionsBtn = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.generalTab.SuspendLayout();
             this.camerasTab.SuspendLayout();
@@ -139,6 +136,7 @@
             // 
             // generalTab
             // 
+            this.generalTab.Controls.Add(this.button2);
             this.generalTab.Controls.Add(this.resetPositionsBtn);
             this.generalTab.Controls.Add(this.backupSettingsbutton4);
             this.generalTab.Controls.Add(this.label9);
@@ -153,6 +151,27 @@
             this.generalTab.TabIndex = 0;
             this.generalTab.Text = "General";
             this.generalTab.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(8, 174);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 6;
+            this.button2.Text = "TEST";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Visible = false;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // resetPositionsBtn
+            // 
+            this.resetPositionsBtn.Location = new System.Drawing.Point(8, 203);
+            this.resetPositionsBtn.Name = "resetPositionsBtn";
+            this.resetPositionsBtn.Size = new System.Drawing.Size(161, 23);
+            this.resetPositionsBtn.TabIndex = 5;
+            this.resetPositionsBtn.Text = "Reset windows positions";
+            this.resetPositionsBtn.UseVisualStyleBackColor = true;
+            this.resetPositionsBtn.Click += new System.EventHandler(this.resetPositionsBtn_Click);
             // 
             // backupSettingsbutton4
             // 
@@ -185,6 +204,7 @@
             // customUIcheckBox1
             // 
             this.customUIcheckBox1.AutoSize = true;
+            this.customUIcheckBox1.Enabled = false;
             this.customUIcheckBox1.Location = new System.Drawing.Point(6, 29);
             this.customUIcheckBox1.Name = "customUIcheckBox1";
             this.customUIcheckBox1.Size = new System.Drawing.Size(243, 17);
@@ -205,12 +225,6 @@
             // camerasTab
             // 
             this.camerasTab.Controls.Add(this.selectedCameraLabel);
-            this.camerasTab.Controls.Add(this.cameraSourceEditBox);
-            this.camerasTab.Controls.Add(this.cameraNameEditBox);
-            this.camerasTab.Controls.Add(this.label8);
-            this.camerasTab.Controls.Add(this.label7);
-            this.camerasTab.Controls.Add(this.button3);
-            this.camerasTab.Controls.Add(this.button2);
             this.camerasTab.Controls.Add(this.camerasListView1);
             this.camerasTab.Location = new System.Drawing.Point(4, 22);
             this.camerasTab.Name = "camerasTab";
@@ -230,58 +244,6 @@
             this.selectedCameraLabel.Text = "-1";
             this.selectedCameraLabel.Visible = false;
             // 
-            // cameraSourceEditBox
-            // 
-            this.cameraSourceEditBox.Location = new System.Drawing.Point(47, 200);
-            this.cameraSourceEditBox.Name = "cameraSourceEditBox";
-            this.cameraSourceEditBox.Size = new System.Drawing.Size(299, 20);
-            this.cameraSourceEditBox.TabIndex = 6;
-            // 
-            // cameraNameEditBox
-            // 
-            this.cameraNameEditBox.Location = new System.Drawing.Point(47, 178);
-            this.cameraNameEditBox.Name = "cameraNameEditBox";
-            this.cameraNameEditBox.Size = new System.Drawing.Size(100, 20);
-            this.cameraNameEditBox.TabIndex = 5;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(3, 203);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(44, 13);
-            this.label8.TabIndex = 4;
-            this.label8.Text = "Source:";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(3, 181);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(38, 13);
-            this.label7.TabIndex = 3;
-            this.label7.Text = "Name:";
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(182, 175);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 2;
-            this.button3.Text = "New";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(263, 175);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(83, 23);
-            this.button2.TabIndex = 1;
-            this.button2.Text = "Add/Update";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
             // camerasListView1
             // 
             this.camerasListView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -292,11 +254,12 @@
             this.camerasListView1.GridLines = true;
             this.camerasListView1.Location = new System.Drawing.Point(0, 0);
             this.camerasListView1.Name = "camerasListView1";
-            this.camerasListView1.Size = new System.Drawing.Size(352, 172);
+            this.camerasListView1.Size = new System.Drawing.Size(352, 232);
             this.camerasListView1.TabIndex = 0;
             this.camerasListView1.UseCompatibleStateImageBehavior = false;
             this.camerasListView1.View = System.Windows.Forms.View.Details;
             this.camerasListView1.SelectedIndexChanged += new System.EventHandler(this.camerasListView1_SelectedIndexChanged);
+            this.camerasListView1.DoubleClick += new System.EventHandler(this.camerasListView1_DoubleClick);
             // 
             // cameraNameHeader1
             // 
@@ -311,9 +274,25 @@
             // camerasListContextMenu
             // 
             this.camerasListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newToolStripMenuItem,
+            this.editToolStripMenuItem,
             this.deleteToolStripMenuItem});
             this.camerasListContextMenu.Name = "camerasListContextMenu";
-            this.camerasListContextMenu.Size = new System.Drawing.Size(108, 26);
+            this.camerasListContextMenu.Size = new System.Drawing.Size(108, 70);
+            // 
+            // newToolStripMenuItem
+            // 
+            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.newToolStripMenuItem.Text = "New";
+            this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.editToolStripMenuItem.Text = "Edit";
+            this.editToolStripMenuItem.Click += new System.EventHandler(this.editToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
@@ -362,6 +341,7 @@
             this.mqttalertsbtn.TabIndex = 12;
             this.mqttalertsbtn.Text = "Edit Alerts";
             this.mqttalertsbtn.UseVisualStyleBackColor = true;
+            this.mqttalertsbtn.Visible = false;
             this.mqttalertsbtn.Click += new System.EventHandler(this.mqttalertsbtn_Click);
             // 
             // clientidtextbox
@@ -540,16 +520,6 @@
             this.checkBoxLedsOnTop.Text = "Alert light leds are always on top";
             this.checkBoxLedsOnTop.UseVisualStyleBackColor = true;
             // 
-            // resetPositionsBtn
-            // 
-            this.resetPositionsBtn.Location = new System.Drawing.Point(8, 203);
-            this.resetPositionsBtn.Name = "resetPositionsBtn";
-            this.resetPositionsBtn.Size = new System.Drawing.Size(161, 23);
-            this.resetPositionsBtn.TabIndex = 5;
-            this.resetPositionsBtn.Text = "Reset windows positions";
-            this.resetPositionsBtn.UseVisualStyleBackColor = true;
-            this.resetPositionsBtn.Click += new System.EventHandler(this.resetPositionsBtn_Click);
-            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -567,6 +537,7 @@
             this.Text = "Settings";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.SettingsForm_FormClosed);
             this.Load += new System.EventHandler(this.SettingsForm_Load);
+            this.Leave += new System.EventHandler(this.SettingsForm_Leave);
             this.tabControl1.ResumeLayout(false);
             this.generalTab.ResumeLayout(false);
             this.generalTab.PerformLayout();
@@ -606,15 +577,9 @@
         private System.Windows.Forms.TextBox servertextbox;
         private System.Windows.Forms.Button mqtttest;
         private System.Windows.Forms.CheckBox mqttsupport_checkbox;
-        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ListView camerasListView1;
         private System.Windows.Forms.ColumnHeader cameraNameHeader1;
         private System.Windows.Forms.ColumnHeader cameraUrlHeader1;
-        private System.Windows.Forms.TextBox cameraSourceEditBox;
-        private System.Windows.Forms.TextBox cameraNameEditBox;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label selectedCameraLabel;
         private System.Windows.Forms.ContextMenuStrip camerasListContextMenu;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
@@ -631,5 +596,8 @@
         private System.Windows.Forms.Button backupSettingsbutton4;
         private System.Windows.Forms.CheckBox allCamerasOntopCheckbox;
         private System.Windows.Forms.Button resetPositionsBtn;
+        private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.Button button2;
     }
 }

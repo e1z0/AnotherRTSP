@@ -44,12 +44,12 @@ namespace AnotherRTSP
         {
             InitializeComponent();
             FormBorderStyle = FormBorderStyle.Sizable;
-            Width = Settings.WindowWidth;
-            Height = Settings.WindowHeight;
-            if (Settings.WindowX > 0 && Settings.WindowY > 0)
+            Width = YmlSettings.Data.WindowWidth;
+            Height = YmlSettings.Data.WindowHeight;
+            if (YmlSettings.Data.WindowX > 0 && YmlSettings.Data.WindowY > 0)
             {
                 this.StartPosition = FormStartPosition.Manual;
-                this.Location = new System.Drawing.Point(Settings.WindowX, Settings.WindowY);
+                this.Location = new System.Drawing.Point(YmlSettings.Data.WindowX, YmlSettings.Data.WindowY);
             }
         }
 
@@ -214,10 +214,10 @@ namespace AnotherRTSP
 
         private void PlayerForm_FormClosing(object sender, System.Windows.Forms.FormClosingEventArgs e)
         {
-            Settings.WindowHeight = this.Height;
-            Settings.WindowWidth = this.Width;
-            Settings.WindowX = this.Location.X;
-            Settings.WindowY = this.Location.Y;
+            YmlSettings.Data.WindowHeight = this.Height;
+            YmlSettings.Data.WindowWidth = this.Width;
+            YmlSettings.Data.WindowX = this.Location.X;
+            YmlSettings.Data.WindowY = this.Location.Y;
 
             if (isInit)
             {
@@ -251,9 +251,9 @@ namespace AnotherRTSP
 
             // counter
             int i = 0;
-            if (Settings.Cameras != null && Settings.Cameras.Count > 0)
+            if (Camera.AllCameras != null && Camera.AllCameras.Count > 0)
             {
-                foreach (Camera cam in Settings.Cameras)
+                foreach (Camera cam in Camera.AllCameras)
                 {
                     //MessageBox.Show("cam: "+cam.Key+" url: "+cam.Value, "cam");
                     panels[i] = new Panel();
@@ -264,7 +264,7 @@ namespace AnotherRTSP
                     panels[i].ContextMenuStrip = contextMenuStrip1;
                     panels[i].DoubleClick += new EventHandler(videoPanel_DoubleClick);
                     panels[i].Tag = i;
-                    Chans[i] = PlayerSdk.EasyPlayer_OpenStream(cam.Url, panels[i].Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
+                    Chans[i] = PlayerSdk.EasyPlayer_OpenStream(cam.Config.Url, panels[i].Handle, RENDER_FORMAT, isTCP ? 1 : 0, "", "", callBack, IntPtr.Zero, isHardEncode);
                     if (Chans[i] > 0)
                     {
                         PlayerSdk.EasyPlayer_SetFrameCache(Chans[i], streamCache);

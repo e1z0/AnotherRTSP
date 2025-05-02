@@ -21,6 +21,7 @@
     <SccProvider>
     </SccProvider>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -33,7 +34,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -61,6 +61,10 @@
     <ApplicationIcon>Images\icon_32.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NLua, Version=1.3.0.0, Culture=neutral, PublicKeyToken=8df2ab518030ea95, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLua.1.3.0.0\lib\net40\x86\NLua.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -73,11 +77,23 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
+    <Reference Include="YamlDotNet, Version=4.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\YamlDotNet.4.2.1\lib\net35\YamlDotNet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\Camera.cs" />
+    <Compile Include="Classes\Camera.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Classes\CameraItem.cs" />
     <Compile Include="Classes\Logger.cs" />
+    <Compile Include="Classes\Mqtt.cs" />
+    <Compile Include="Classes\SoundManager.cs" />
+    <Compile Include="Classes\TrayIconManager.cs" />
+    <Compile Include="Classes\Utils.cs" />
     <Compile Include="Classes\Win32Func.cs" />
+    <Compile Include="Classes\YmlSettings.cs" />
     <Compile Include="Components\TinyJson\DefaultDecoder.cs" />
     <Compile Include="Components\TinyJson\DefaultEncoder.cs" />
     <Compile Include="Components\TinyJson\Extensions.cs" />
@@ -108,11 +124,38 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AboutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AboutForm.Designer.cs">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\CameraEditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\MqttRulesForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\MqttRulesForm.Designer.cs">
       <DependentUpon>MqttRulesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\NotificationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NotificationForm.Designer.cs">
+      <DependentUpon>NotificationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ScriptEditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ScriptEditorForm.Designer.cs">
+      <DependentUpon>ScriptEditorForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ScriptManagerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ScriptManagerForm.Designer.cs">
+      <DependentUpon>ScriptManagerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="IniFile.cs" />
     <Compile Include="LogForm.cs">
@@ -123,15 +166,18 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scripting\LuaManager.cs" />
     <Compile Include="Services\LedStateManager.cs" />
     <Compile Include="Services\MqttService.cs" />
-    <Compile Include="Settings.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Classes\Camera.resx">
+      <DependentUpon>Camera.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Components\Toast.resx">
       <DependentUpon>Toast.cs</DependentUpon>
     </EmbeddedResource>
@@ -141,8 +187,17 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AboutForm.resx">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\MqttRulesForm.resx">
       <DependentUpon>MqttRulesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ScriptEditorForm.resx">
+      <DependentUpon>ScriptEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ScriptManagerForm.resx">
+      <DependentUpon>ScriptManagerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="LogForm.resx">
       <DependentUpon>LogForm.cs</DependentUpon>
@@ -160,6 +215,7 @@
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -218,12 +274,20 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>xcopy /y "$(SolutionDir)Solution Items\Lib" $(TargetDir)Lib\</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy /y "$(SolutionDir)bin\AnotherRTSP.exe" $(SolutionDir)..\Bin\</PostBuildEvent>
+    <PostBuildEvent>copy /y "$(SolutionDir)bin\AnotherRTSP.exe" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\YamlDotNet.dll" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\KeraLua.dll" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\lua52.dll" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\NLua.dll" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\msvcr110.dll" $(SolutionDir)..\Bin\
+copy /y "$(SolutionDir)bin\msvcr100.dll" $(SolutionDir)..\Bin\
+xcopy /s /y "C:\Projects\AnotherRTSP\Src\packages\NLua.1.3.0.0\lib\native\x86\*.*" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

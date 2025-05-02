@@ -92,28 +92,29 @@ namespace AnotherRTSP.Forms
 
         private void Apply()
         {
-            var Rules = Settings.MqttRulesSettings;
-            Array.Clear(Settings.MqttRulesSettings, 0, Settings.MqttRulesSettings.Length);
+            var Rules = YmlSettings.Data.MQTTRules;
+            YmlSettings.Data.MQTTRules.Clear();
+            //Array.Clear(YmlSettings.Data.MQTTRules, 0, YmlSettings.Data.MQTTRules.Count);
             var cnt = 0;
             foreach (ListViewItem listItem in RulesListView.Items)
             {
-                var rule = Settings.NewMqttRule(int.Parse(listItem.Text), listItem.SubItems[1].Text, listItem.SubItems[2].Text, int.Parse(listItem.SubItems[3].Text), listItem.SubItems[4].Text, listItem.SubItems[5].Text, int.Parse(listItem.SubItems[6].Text));
+                var rule = Mqtt.NewMqttRule(listItem.Text, listItem.SubItems[1].Text, int.Parse(listItem.SubItems[2].Text), listItem.SubItems[3].Text, listItem.SubItems[5].Text, int.Parse(listItem.SubItems[5].Text));
                 Rules[cnt] = rule;
                 cnt++;
             }
-            Settings.MqttRulesSettings = Rules;
+            YmlSettings.Data.MQTTRules = Rules;
         }
 
         private void MqttRules_Load(object sender, EventArgs e)
         {
             indexLabel.Text = "-1";
-            foreach (MqttRulesDefinition rule in Settings.MqttRulesSettings)
+            foreach (MqttRulesDefinition rule in YmlSettings.Data.MQTTRules)
             {
                 if (rule != null)
                 {
                     var testlog = String.Format("Loading MQTT rule record: ID: {0} ", rule.Topic);
                     Logger.WriteLog(testlog);
-                    ListViewItem item = new ListViewItem(new[] { rule.Id.ToString(), rule.Name, rule.Topic, rule.Type.ToString(), rule.Value1, rule.Value2, rule.Action.ToString() });
+                    ListViewItem item = new ListViewItem(new[] { rule.Name, rule.Topic, rule.Type.ToString(), rule.Value1, rule.Value2, rule.Action.ToString() });
                     RulesListView.Items.Add(item);
                 }
             }

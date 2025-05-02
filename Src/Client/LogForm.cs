@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2024 e1z0. All Rights Reserved.
+ * Licensed under MIT license.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,22 +25,22 @@ namespace AnotherRTSP
         public LogForm()
         {
             InitializeComponent();
-            this.filePath = Settings.LogPath;
+            this.filePath = YmlSettings.Data.LogPath;
 
         }
 
         public void StartService()
         {
-            if (Settings.Logging > 0 && File.Exists(Settings.LogPath))
+            if (YmlSettings.Data.Logging && File.Exists(YmlSettings.Data.LogPath))
             {
                 logThread = new Thread(ReadLogFile);
                 logThread.Start();
                 Logger.WriteLog("Log Window Thread is running...");
                 if (logThread.IsAlive)
                 {
-                    Settings.LogWindowRunning = true;
-                    Settings.LogWindow = 1;
-                    CustomUI.logmenuItem.Checked = true;
+                    YmlSettings.LogWindowRunning = true;
+                    YmlSettings.Data.LogWindow = true;
+                    TrayIconManager.logmenuItem.Checked = true;
                 }
             }
         }
@@ -43,8 +48,8 @@ namespace AnotherRTSP
         public void StopService()
         {
             logThread.Abort();
-            Settings.LogWindowRunning = false;
-            CustomUI.logmenuItem.Checked = false;
+            YmlSettings.LogWindowRunning = false;
+            TrayIconManager.logmenuItem.Checked = false;
             Logger.WriteLog("Log Window Thread is done.");
         }
 
@@ -111,31 +116,34 @@ namespace AnotherRTSP
 
         private void LogForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (Settings.Logging > 0)
+            
+            if (YmlSettings.Data.Logging && YmlSettings.LogWindowRunning)
             {
                 Form frm = sender as Form;
                 if (frm != null)
                 {
-                    Settings.LogWindowX = frm.Location.X;
-                    Settings.LogWindowY = frm.Location.Y;
-                    Settings.LogWindowHeight = frm.Height;
-                    Settings.LogWindowWidth = frm.Width;
+                    YmlSettings.Data.LogWindowX = frm.Location.X;
+                    YmlSettings.Data.LogWindowY = frm.Location.Y;
+                    YmlSettings.Data.LogWindowHeight = frm.Height;
+                    YmlSettings.Data.LogWindowWidth = frm.Width;
 
                     // only fire when user actually closes the form
                     if (e.CloseReason == CloseReason.UserClosing)
                     {
-                        Settings.LogWindow = 0;
+                        YmlSettings.Data.LogWindow = false;
+                        //YmlSettings.LogWindowRunning = false;
+                        StopService();
                     }
-                    StopService();
                 }
             }
+             
         }
 
         private void LogForm_Load(object sender, EventArgs e)
         {
-            if (Settings.LogWindowHeight > 0 && Settings.LogWindowWidth > 0)
-                this.Size = new Size(Settings.LogWindowWidth, Settings.LogWindowHeight);
-            this.Location = new Point(Settings.LogWindowX, Settings.LogWindowY);
+            if (YmlSettings.Data.LogWindowHeight > 0 && YmlSettings.Data.LogWindowWidth > 0)
+                this.Size = new Size(YmlSettings.Data.LogWindowWidth, YmlSettings.Data.LogWindowHeight);
+            this.Location = new Point(YmlSettings.Data.LogWindowX, YmlSettings.Data.LogWindowY);
             StartService();
         }
 
@@ -164,7 +172,7 @@ namespace AnotherRTSP
             MouseEventArgs mouseEvent = e as MouseEventArgs;
             if (mouseEvent != null && mouseEvent.Button == MouseButtons.Left)
             {
-                if (Settings.Advanced.FocusAllWindowsOnClick)
+                if (YmlSettings.Advanced.FocusAllWindowsOnClick)
                 {
                     // Get all open forms and bring each one to the front
                     foreach (Form form in Application.OpenForms)

@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2024 e1z0. All Rights Reserved.
+ * Licensed under MIT license.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -40,103 +45,69 @@ namespace AnotherRTSP
 
         private void setSettings()
         {
+            // new settings interface
+            YmlSettings.Data.MqttEnabled = mqttsupport_checkbox.Checked;
+            YmlSettings.Data.MQTT.Server = servertextbox.Text;
+            YmlSettings.Data.MQTT.Port = int.Parse(porttextbox.Text);
+            YmlSettings.Data.MQTT.Username = usernametextbox.Text;
+            YmlSettings.Data.MQTT.Password = passwordtextbox.Text;
+            YmlSettings.Data.MQTT.ClientID = clientidtextbox.Text;
+
             // general settings
-            Settings.Logging = LoggingcheckBox1.Checked ? 1 : 0;
-            Settings.CustomLayout = customUIcheckBox1.Checked ? 1 : 0;
+            YmlSettings.Data.Logging = LoggingcheckBox1.Checked;
+            YmlSettings.Data.CustomLayout = LoggingcheckBox1.Checked;
 
             // mqtt section
-            Settings.MqttEnabled = mqttsupport_checkbox.Checked ? 1 : 0;
+            YmlSettings.Data.MqttEnabled = mqttsupport_checkbox.Checked;
             if (servertextbox.Text != "")
-                Settings.MqttSettings.Server = servertextbox.Text;
+                YmlSettings.Data.MQTT.Server = servertextbox.Text;
             if (porttextbox.Text != "")
-                Settings.MqttSettings.Port = int.Parse(porttextbox.Text);
+                YmlSettings.Data.MQTT.Port = int.Parse(porttextbox.Text);
             if (usernametextbox.Text != "")
-                Settings.MqttSettings.Username = usernametextbox.Text;
+                YmlSettings.Data.MQTT.Username = usernametextbox.Text;
             if (passwordtextbox.Text != "")
-                Settings.MqttSettings.Password = passwordtextbox.Text;
+                YmlSettings.Data.MQTT.Password = passwordtextbox.Text;
             if (clientidtextbox.Text != "")
-                Settings.MqttSettings.ClientID = clientidtextbox.Text;
+                YmlSettings.Data.MQTT.ClientID = clientidtextbox.Text;
 
-            // cameras section
-            foreach (ListViewItem listItem in camerasListView1.Items)
-            {
-                string name = listItem.Text;
-                int width = 240;
-                int height = 180;
-                int posx = 0;
-                int posy = 0;
-                string url = listItem.SubItems[1].Text;
-                bool disabled = false;
-                foreach (Camera cam in Settings.Cameras)
-                {
-                    if (cam.Name == name)
-                    {
-                        cam.UpdateWindowSpecs();
-                        width = cam.WWidth;
-                        height = cam.WHeight;
-                        posx = cam.WX;
-                        posy = cam.WY;
-                        disabled = cam.Disabled;
-                    }
-                }
-                Camera newCamera = new Camera(name,width,height,posx,posy,url,disabled);
-                Settings.Cameras.Add(newCamera);
-            }
-            Settings.OverrideCamsList();
             // advanced tab
-            Settings.Advanced.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
-            Settings.Advanced.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
-            Settings.Advanced.FocusAllWindowsOnClick = allWindowsFocus.Checked;
-            Settings.Advanced.StaticCameraCaption = staticCameraCaptioncheckBox1.Checked;
-            Settings.Advanced.DisableCameraCaptions = disableCameraCaptionCheckbox.Checked;
-            Settings.Advanced.AllCamerasWindowsOnTop = allCamerasOntopCheckbox.Checked;
+            YmlSettings.Advanced.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
+            YmlSettings.Advanced.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
+            YmlSettings.Advanced.FocusAllWindowsOnClick = allWindowsFocus.Checked;
+            YmlSettings.Advanced.StaticCameraCaption = staticCameraCaptioncheckBox1.Checked;
+            YmlSettings.Advanced.DisableCameraCaptions = disableCameraCaptionCheckbox.Checked;
+            YmlSettings.Advanced.AllCamerasWindowsOnTop = allCamerasOntopCheckbox.Checked;
         }
 
         private void loadSettings()
         {
             // general settings
-            LoggingcheckBox1.Checked = Settings.Logging == 1;
-            customUIcheckBox1.Checked = Settings.CustomLayout == 1;
+            LoggingcheckBox1.Checked = YmlSettings.Data.Logging;
+            customUIcheckBox1.Checked = YmlSettings.Data.CustomLayout;
 
             // mqtt section
-            mqttsupport_checkbox.Checked = Settings.MqttEnabled == 1;
-            servertextbox.Text = Settings.MqttSettings.Server;
-            porttextbox.Text = Settings.MqttSettings.Port.ToString();
-            usernametextbox.Text = Settings.MqttSettings.Username;
-            passwordtextbox.Text = Settings.MqttSettings.Password;
-            clientidtextbox.Text = Settings.MqttSettings.ClientID;
+            mqttsupport_checkbox.Checked = YmlSettings.Data.MqttEnabled;
+            servertextbox.Text = YmlSettings.Data.MQTT.Server;
+            porttextbox.Text = YmlSettings.Data.MQTT.Port.ToString();
+            usernametextbox.Text = YmlSettings.Data.MQTT.Username;
+            passwordtextbox.Text = YmlSettings.Data.MQTT.Password;
+            clientidtextbox.Text = YmlSettings.Data.MQTT.ClientID;
 
 
             // load cameras
-            foreach (Camera cam in Settings.Cameras)
+            foreach (CameraItem cam in YmlSettings.Data.Cameras)
             {
                 ListViewItem item = new ListViewItem(new[] { cam.Name, cam.Url });
                 camerasListView1.Items.Add(item);
             }
             // advanced tab
-            checkBoxLedsOnTop.Checked = Settings.Advanced.LedsWindowOnTop;
-            checkBoxLedsAlertSounds.Checked = Settings.Advanced.LedsSoundAlert;
-            allWindowsFocus.Checked = Settings.Advanced.FocusAllWindowsOnClick;
-            staticCameraCaptioncheckBox1.Checked = Settings.Advanced.StaticCameraCaption;
-            disableCameraCaptionCheckbox.Checked = Settings.Advanced.DisableCameraCaptions;
-            allCamerasOntopCheckbox.Checked = Settings.Advanced.AllCamerasWindowsOnTop;
+            checkBoxLedsOnTop.Checked = YmlSettings.Data.AdvancedSettings.LedsWindowOnTop;
+            checkBoxLedsAlertSounds.Checked = YmlSettings.Data.AdvancedSettings.LedsSoundAlert;
+            allWindowsFocus.Checked = YmlSettings.Data.AdvancedSettings.FocusAllWindowsOnClick;
+            staticCameraCaptioncheckBox1.Checked = YmlSettings.Data.AdvancedSettings.StaticCameraCaption;
+            disableCameraCaptionCheckbox.Checked = YmlSettings.Data.AdvancedSettings.DisableCameraCaptions;
+            allCamerasOntopCheckbox.Checked = YmlSettings.Data.AdvancedSettings.AllCamerasWindowsOnTop;
         }
-        /*
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            //Form logfrm = new LogForm();
-            if (checkBox1.Checked)
-            {
-                // Show the form if the CheckBox is checked
-                Settings.ShowOrActivateForm<LogForm>();
-            }
-            else
-            {
-                // Hide the form if the CheckBox is not checked
-                Settings.DeactivateForm<LogForm>();
-            }
-        }
-         */
 
         private void okbtn_Click(object sender, EventArgs e)
         {
@@ -183,58 +154,53 @@ namespace AnotherRTSP
 
         private void camerasListView1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (camerasListView1.SelectedItems.Count > 0)
-            {
-                var item = camerasListView1.SelectedItems[0];
-                cameraNameEditBox.Text = item.SubItems[0].Text;
-                cameraSourceEditBox.Text = item.SubItems[1].Text;
-                selectedCameraLabel.Text = item.Index.ToString();
-            }
+
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            selectedCameraLabel.Text = "-1";
-            cameraSourceEditBox.Text = "";
-            cameraNameEditBox.Text = "";
-        }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            int index = int.Parse(selectedCameraLabel.Text);
 
-            if (index >= 0)
-            {
-                // update
-                camerasListView1.Items[index].SubItems[0].Text = cameraNameEditBox.Text;
-                camerasListView1.Items[index].SubItems[1].Text = cameraSourceEditBox.Text;
-            }
-            if (index == -1)
-            {
-                // insert new
-                if (cameraSourceEditBox.Text != "" && cameraNameEditBox.Text != "")
-                {
-                    ListViewItem item = new ListViewItem(new[] { cameraNameEditBox.Text, cameraSourceEditBox.Text });
-                    camerasListView1.Items.Add(item);
-                }
-                else
-                {
-                    MessageBox.Show("Not all fields are filled!");
-                }
-            }
-        }
 
-        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            foreach (ListViewItem item in camerasListView1.SelectedItems)
-            {
-                camerasListView1.Items.Remove(item);
-            }
-        }
 
         private void backupSettingsbutton4_Click(object sender, EventArgs e)
         {
-            using (SaveFileDialog dialog = new SaveFileDialog())
+            try
+            {
+                // Get application directory
+                string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string backupsDirectory = Path.Combine(appDirectory, "backups");
+
+                // Ensure backups folder exists
+                if (!Directory.Exists(backupsDirectory))
+                {
+                    Directory.CreateDirectory(backupsDirectory);
+                }
+
+                // Create filename
+                string timestamp = DateTime.Now.ToString("yyyy.MM.dd-HH-mm-ss");
+                string backupFilename = string.Format("settings-{0}.yml", timestamp);
+                string backupFilePath = Path.Combine(backupsDirectory, backupFilename);
+
+                // Get path to current settings file
+                string currentSettingsPath = Path.Combine(appDirectory, "config.yml"); // Adjust if your main config has different path
+
+                // Copy file
+                if (File.Exists(currentSettingsPath))
+                {
+                    File.Copy(currentSettingsPath, backupFilePath, true);
+
+                    // Inform user
+                    MessageBox.Show("Settings backed up successfully!\nLocation:\n" + backupFilePath, "Backup Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Current settings file not found!\nExpected at:\n" + currentSettingsPath, "Backup Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error during backup:\n" + ex.Message, "Backup Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            /*using (SaveFileDialog dialog = new SaveFileDialog())
             {
                 dialog.Filter = "ini files (*.ini)|*.ini|All files (*.*)|*.*";
                 dialog.FileName = "settings.ini";
@@ -251,19 +217,15 @@ namespace AnotherRTSP
                     file.Close();
 
                 }
-            }
+            }*/
         }
 
         private void resetPositionsBtn_Click(object sender, EventArgs e)
         {
-            Settings.LedWindowX = 0;
-            Settings.LedWindowY = 0;
-            Settings.LogWindowX = 0;
-            Settings.LogWindowY = 0;
-            foreach (Camera cam in Settings.Cameras)
+            foreach (CameraItem localItem in YmlSettings.Data.Cameras) 
             {
-                cam.SetFormSize(240, 180);
-                cam.SetFormLocation(0, 0);
+                CameraItem item = localItem;
+                Camera.ResetCamera(item);
             }
             foreach (Form form in Application.OpenForms)
             {
@@ -278,6 +240,90 @@ namespace AnotherRTSP
                 
             }
             MessageBox.Show("Resize done!");
+             
+        }
+
+        private void SettingsForm_Leave(object sender, EventArgs e)
+        {
+
+        }
+
+        // delete
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in camerasListView1.SelectedItems)
+            {
+                string selectedName = item.Text;
+                CameraItem selectedCameraItem = YmlSettings.Data.Cameras.FirstOrDefault(c => c.Name == selectedName);
+                if (selectedCameraItem != null)
+                {
+                    DialogResult result = MessageBox.Show("Are you sure you want to remove camera: " + selectedCameraItem.Name + "?",
+    "Confirm Removal",
+    MessageBoxButtons.YesNo,
+    MessageBoxIcon.Warning
+);
+                    if (result == DialogResult.Yes)
+                    {
+                        Camera.RemoveCamera(selectedCameraItem);
+                        camerasListView1.Items.Remove(item);
+                    }
+                }
+
+            }
+        }
+
+        private void EditCamera()
+        {
+            if (camerasListView1.SelectedItems.Count > 0)
+            {
+                var selectedCameraItemName = camerasListView1.SelectedItems[0].Text;
+                CameraItem selectedCameraItem = YmlSettings.Data.Cameras.FirstOrDefault(c => c.Name == selectedCameraItemName);
+                CameraEditorForm editor = new CameraEditorForm(selectedCameraItem);
+                if (editor.ShowDialog() == DialogResult.OK)
+                {
+                    CameraItem editCamera = editor.CameraItem;
+                    Camera.EditCamera(selectedCameraItem, editCamera);
+                    camerasListView1.Items.Remove(camerasListView1.SelectedItems[0]);
+                    ListViewItem listitem = new ListViewItem(new[] { editCamera.Name, editCamera.Url });
+                    camerasListView1.Items.Add(listitem);
+                }
+            }
+            else
+            {
+                MessageBox.Show("No item selected","Info",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+            }
+        }
+
+        // edit
+        private void editToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            EditCamera();
+        }
+
+        // new
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CameraEditorForm editor = new CameraEditorForm();
+            if (editor.ShowDialog() == DialogResult.OK)
+            {
+                CameraItem newCamera = editor.CameraItem;
+                Camera.AddCamera(newCamera);
+                ListViewItem listitem = new ListViewItem(new[] { newCamera.Name, newCamera.Url });
+                camerasListView1.Items.Add(listitem);
+            }
+        }
+
+        private void camerasListView1_DoubleClick(object sender, EventArgs e)
+        {
+            EditCamera();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            //Classes.TrayIconManager.BalloonTip("title", "text", ToolTipIcon.Info, 3000);
+            //NotificationForm.ShowNotification("Motion Detected", "Camera 1 detected movement!", 5000);
+            SoundManager.PlaySound("battle1_");
+
         }
     }
 }
