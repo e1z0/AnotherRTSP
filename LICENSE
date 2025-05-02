@@ -1,21 +1,26 @@
-MIT License
+Business Source License 1.1
 
-Copyright (c) 2023-2024 e1z0
+Parameters
+==========
+Licensor: Justinas K [e1z0] e1z0@icloud.com
+Licensed Work: AnotherRTSP
+Additional Use Grant: Non-commercial use only (personal, educational, research).
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Terms
+=====
+The Licensed Work is provided under the terms of the Business Source License 1.1 (BUSL-1.1), available at:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+https://mariadb.com/busl1.1/
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Use Restrictions
+================
+You may use, copy, modify, and distribute the Licensed Work, but only for non-commercial purposes.  
+Commercial use of the Licensed Work — including offering the Licensed Work as a service, using the Licensed Work to provide commercial services, or incorporating the Licensed Work into commercial products — requires a separate commercial license from the Licensor.
+
+Contact
+=======
+For commercial licensing requests, please contact: [e1z0@icloud.com]
+
+Copyright
+=========
+Copyright (c) 2025 Justinas K [e1z0].
