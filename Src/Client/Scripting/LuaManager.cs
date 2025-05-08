@@ -38,7 +38,7 @@ namespace AnotherRTSP.Scripting
             lua.LoadCLRPackage();
             lua["CameraManager"] = new LuaCameraManager();
             //lua["Logger"] = new LuaLogger();
-            lua.RegisterFunction("Log",typeof(LuaLogger).GetMethod("WriteLog"));
+            lua.RegisterFunction("Log", typeof(LuaLogger).GetMethod("WriteLog"));
             lua.RegisterFunction("Sleep", null, typeof(System.Threading.Thread).GetMethod("Sleep", new[] { typeof(int) }));
             lua.RegisterFunction("SubscribeToMqtt", typeof(LuaManager).GetMethod("SubscribeToMqtt"));
             // BallonTip
@@ -48,11 +48,11 @@ namespace AnotherRTSP.Scripting
             lua.RegisterFunction("Sound", typeof(SoundManager).GetMethod("PlaySound"));
             LoadScripts();
 
-                    // Start all startup scripts
-        foreach (var script in Scripts.Where(s => s.RunOnStartup))
-        {
-            RunScriptThreaded(script);
-        }
+            // Start all startup scripts
+            foreach (var script in Scripts.Where(s => s.RunOnStartup))
+            {
+                RunScriptThreaded(script);
+            }
         }
 
         public static void Shutdown()
@@ -75,8 +75,8 @@ namespace AnotherRTSP.Scripting
                 }
             }
 
-           scriptThreads.Clear();
-       }
+            scriptThreads.Clear();
+        }
 
         public static void LoadScripts()
         {
@@ -137,7 +137,7 @@ namespace AnotherRTSP.Scripting
 
         public static void AddOrUpdateScript(string name, string source, string description, bool startup)
         {
-             
+
             var script = Scripts.FirstOrDefault(x => x.Name == name);
             if (script == null)
             {
@@ -205,8 +205,8 @@ namespace AnotherRTSP.Scripting
             }
         }
 
-        
-        
+
+
 
 
 

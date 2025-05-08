@@ -41,7 +41,7 @@ namespace AnotherRTSP.Classes
                     Utils.ShowOrActivateForm<LogForm>();
                 else
                     Utils.DeactivateForm<LogForm>();
-                    //Utils.DeactivateForm<LogForm>();
+                //Utils.DeactivateForm<LogForm>();
             };
             _trayMenu.Items.Add(logmenuItem);
             _trayMenu.Items.Add("Exit", null, (s, e) => Utils.AppExit());
@@ -85,7 +85,8 @@ namespace AnotherRTSP.Classes
             return _trayMenu; // or return _trayIcon.ContextMenuStrip;
         }
 
-        public static void ShowBalloon(string title, string text, string iconTypeString, int delay) {
+        public static void ShowBalloon(string title, string text, string iconTypeString, int delay)
+        {
             ToolTipIcon iconType = ToolTipIcon.Info;
             if (!string.IsNullOrEmpty(iconTypeString))
             {
@@ -95,7 +96,7 @@ namespace AnotherRTSP.Classes
             _trayIcon.BalloonTipTitle = title;
             _trayIcon.BalloonTipIcon = iconType;
             _trayIcon.ShowBalloonTip(delay);
-       }
+        }
 
         public static void PopulateCameraList()
         {

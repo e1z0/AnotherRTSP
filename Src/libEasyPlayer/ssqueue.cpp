@@ -10,6 +10,39 @@
 #include <stdarg.h>
 #include "trace.h"
 
+// Memory safety first! Ensures null and bounds checks, Logs violations clearly, Keeps syntax clean where used
+#define SAFE_MEMCPY(dst, src, len)                                                   \
+    do {                                                                             \
+        if ((dst) == NULL || (src) == NULL || (len) <= 0 || (len) > MAX_FRAME_SIZE)  \
+        {                                                                            \
+            SSQ_TRACE("SAFE_MEMCPY BLOCKED: dst=%p src=%p len=%d\\n", dst, src, len);\
+            ReleaseMutex(pObj->hMutex);                                              \
+            return -1;                                                               \
+        }                                                                            \
+        memcpy(dst, src, len);                                                       \
+    } while(0)
+
+
+bool isValidRead(SS_QUEUE_OBJ_T* pObj, int length)
+{
+    if (!pObj || !pObj->pQueHeader || !pObj->pQueData)
+        return false;
+
+    int offset = pObj->pQueHeader->readpos;
+    int bufsize = pObj->pQueHeader->bufsize;
+
+    if (length <= 0 || length > MAX_FRAME_SIZE)
+        return false;
+
+    if (offset < 0 || offset >= bufsize)
+        return false;
+
+    if (offset + length > bufsize)
+        return false;
+
+    return true;
+}
+
 int		SSQ_Init(SS_QUEUE_OBJ_T *pObj, unsigned int sharememory, unsigned int channelid, wchar_t *sharename, unsigned int bufsize, unsigned int prerecordsecs, unsigned int createsharememory)
 {
 	wchar_t wszHeaderName[36] = {0,};
@@ -361,7 +394,8 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 	pObj->pQueHeader->isfull = 0x00;
 
 	memset(&bufNode, 0x00, sizeof(SS_BUF_T));
-	memcpy(&bufNode.frameinfo, frameinfo, sizeof(MEDIA_FRAME_INFO));
+	//memcpy(&bufNode.frameinfo, frameinfo, sizeof(MEDIA_FRAME_INFO));
+	SAFE_MEMCPY(&bufNode.frameinfo, frameinfo, sizeof(MEDIA_FRAME_INFO));
 	bufNode.channelid = channelid;//++m_FrameTally;
 	bufNode.mediatype = mediatype;
 	bufNode.flag	=	BUF_QUE_FLAG;
@@ -378,10 +412,12 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 		if (mediatype==MEDIA_TYPE_VIDEO)	SSQ_AddFrameInfo(pObj, pObj->pQueHeader->writepos, frameinfo);
 
 		unsigned int nAdd = pObj->pQueHeader->writepos;
-		memcpy(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
+		//memcpy(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
+		SAFE_MEMCPY(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
 		nAdd += sizeof(SS_BUF_T);
 
-		memcpy(pObj->pQueData+nAdd, pbuf, frameinfo->length);
+		//memcpy(pObj->pQueData+nAdd, pbuf, frameinfo->length);
+		SAFE_MEMCPY(pObj->pQueData+nAdd, pbuf, frameinfo->length);
 		nAdd += frameinfo->length;
 		pObj->pQueHeader->writepos = nAdd;
 		pObj->pQueHeader->totalsize+= sizeof(SS_BUF_T);
@@ -397,10 +433,12 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 		if (mediatype==MEDIA_TYPE_VIDEO)	SSQ_AddFrameInfo(pObj, 0, frameinfo);
 
 
-		memcpy(pObj->pQueData, &bufNode, sizeof(SS_BUF_T));
+		//memcpy(pObj->pQueData, &bufNode, sizeof(SS_BUF_T));
+		SAFE_MEMCPY(pObj->pQueData, &bufNode, sizeof(SS_BUF_T));
 		pObj->pQueHeader->writepos = sizeof(SS_BUF_T);
 
-		memcpy(pObj->pQueData+pObj->pQueHeader->writepos, pbuf, frameinfo->length);
+		//memcpy(pObj->pQueData+pObj->pQueHeader->writepos, pbuf, frameinfo->length);
+		SAFE_MEMCPY(pObj->pQueData+pObj->pQueHeader->writepos, pbuf, frameinfo->length);
 		pObj->pQueHeader->writepos += frameinfo->length;
 
 		pObj->pQueHeader->totalsize= sizeof(SS_BUF_T);
@@ -423,7 +461,8 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 			if (mediatype==MEDIA_TYPE_VIDEO)	SSQ_AddFrameInfo(pObj, nAdd, frameinfo);
 
 			//_TRACE("WritePos111: %d\n", pQueHeader->writepos);
-			memcpy(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
+			//memcpy(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
+			SAFE_MEMCPY(pObj->pQueData+nAdd, &bufNode, sizeof(SS_BUF_T));
 			nAdd += sizeof(SS_BUF_T);
 			//pQueHeader->totalsize+= sizeof(SS_BUF_T);
 			//_TRACE("WritePos222: %d\n", pQueHeader->writepos+sizeof(SS_BUF_T));
@@ -431,8 +470,10 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 			//_TRACE("WritePos: %d\n", pQueHeader->writepos+sizeof(SS_BUF_T)+remain);
 			if (remain>0)
 			{
-				memcpy(pObj->pQueData+nAdd, pbuf, remain);
-				memcpy(pObj->pQueData, pbuf+remain, frameinfo->length-remain);
+				//memcpy(pObj->pQueData+nAdd, pbuf, remain);
+				SAFE_MEMCPY(pObj->pQueData+nAdd, pbuf, remain);
+				//memcpy(pObj->pQueData, pbuf+remain, frameinfo->length-remain);
+				SAFE_MEMCPY(pObj->pQueData, pbuf+remain, frameinfo->length-remain);
 				nAdd = frameinfo->length-remain;
 
 				pObj->pQueHeader->writepos = nAdd;
@@ -454,7 +495,8 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 			}
 			else if (remain==0)
 			{
-				memcpy(pObj->pQueData, pbuf, frameinfo->length);
+				//memcpy(pObj->pQueData, pbuf, frameinfo->length);
+				SAFE_MEMCPY(pObj->pQueData, pbuf, frameinfo->length);
 				nAdd = frameinfo->length;
 				pObj->pQueHeader->writepos = nAdd;
 				pObj->pQueHeader->totalsize+= sizeof(SS_BUF_T);
@@ -490,11 +532,14 @@ int		SSQ_AddData(SS_QUEUE_OBJ_T *pObj, unsigned int channelid, unsigned int medi
 
 
 			//SSQ_TRACE("ADD DATA...%d\n", nAdd);
-			memcpy(pObj->pQueData+nAdd, tmpbuf, remain);
+			//memcpy(pObj->pQueData+nAdd, tmpbuf, remain);
+			SAFE_MEMCPY(pObj->pQueData+nAdd, tmpbuf, remain);
 			//SSQ_TRACE("ADD DATA222...%d\n", sizeof(SS_BUF_T)-remain);
-			memcpy(pObj->pQueData, tmpbuf+remain, sizeof(SS_BUF_T)-remain);
+			//memcpy(pObj->pQueData, tmpbuf+remain, sizeof(SS_BUF_T)-remain);
+			SAFE_MEMCPY(pObj->pQueData, tmpbuf+remain, sizeof(SS_BUF_T)-remain);
 			nAdd = sizeof(SS_BUF_T)-remain;
-			memcpy(pObj->pQueData+nAdd, pbuf, frameinfo->length);
+			//memcpy(pObj->pQueData+nAdd, pbuf, frameinfo->length);
+			SAFE_MEMCPY(pObj->pQueData+nAdd, pbuf, frameinfo->length);
 
 			nAdd += frameinfo->length;
 			pObj->pQueHeader->writepos  = nAdd;
@@ -632,7 +677,8 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 		if (NULL != channelid)		*channelid = pNode->channelid;
 
 
-		memcpy(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
+		//memcpy(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
+		SAFE_MEMCPY(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
 		if ( (pObj->pQueHeader->readpos + pNode->frameinfo.length+sizeof(SS_BUF_T)) <= pObj->pQueHeader->bufsize)
 		{
 			//从头到尾读
@@ -656,9 +702,56 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 			unsigned int total1 = pObj->pQueHeader->totalsize;
 			pObj->pQueHeader->totalsize -= sizeof(SS_BUF_T);
 
-			if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, frameinfo->length);
+			// TODO FIXME CRITICAL BUG HERE
+			uintptr_t src = (uintptr_t)(pObj->pQueData + pObj->pQueHeader->readpos);
+			uintptr_t srcBase = (uintptr_t)pObj->pQueData;
+			uintptr_t srcLimit = srcBase + pObj->pQueHeader->bufsize;
 
-			//memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, frameinfo->length);	//clear
+			if (src < srcBase || src + frameinfo->length > srcLimit)
+			{
+					SSQ_TRACE("CRITICAL: Out-of-bounds memcpy! src=0x%p limit=0x%p len=%d\\n", (void*)src, (void*)srcLimit, frameinfo->length);
+				    ReleaseMutex(pObj->hMutex);
+					return -1;
+			}
+
+
+			if (pObj->pQueHeader == NULL || pObj->pQueData == NULL || pbuf == NULL)
+            {
+                  SSQ_TRACE("CRITICAL: Null pointer before memcpy!\\n");
+                  ReleaseMutex(pObj->hMutex);
+                  return -1;
+            }
+
+            if (pObj->pQueHeader->readpos < 0 ||
+						frameinfo->length <= 0 || frameinfo->length > MAX_FRAME_SIZE ||
+						pObj->pQueHeader->readpos + frameinfo->length > pObj->pQueHeader->bufsize)
+			{
+				  SSQ_TRACE("CRITICAL: memcpy blocked! readpos=%d, len=%d, bufsize=%d\\n",
+                             pObj->pQueHeader->readpos, frameinfo->length, pObj->pQueHeader->bufsize);
+                  ReleaseMutex(pObj->hMutex);
+                  return -1;
+            }
+
+
+			if (!isValidRead(pObj, frameinfo->length)) {
+                       SSQ_TRACE("Blocked unsafe read: readpos=%d len=%d\n",
+                       pObj->pQueHeader->readpos, frameinfo->length);
+                       ReleaseMutex(pObj->hMutex);
+                       return -1;
+           }
+			// MITIGATION OF OLD CODE
+			//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, frameinfo->length);
+			// need a more cleaner implementation of this hard tough fix
+			__try {
+                 memcpy(pbuf, pObj->pQueData + pObj->pQueHeader->readpos, frameinfo->length);
+            }
+            __except(EXCEPTION_EXECUTE_HANDLER) {
+                 SSQ_TRACE("EXCEPTION: memcpy crashed. Auto-skipping frame.\n");
+                 ReleaseMutex(pObj->hMutex);
+                 return -1;
+            }
+
+			memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, frameinfo->length);	//clear
 
 			pObj->pQueHeader->readpos += frameinfo->length;
 			unsigned int total2 = pObj->pQueHeader->totalsize;
@@ -697,9 +790,76 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 				if (remain>0)
 				{
 					//SSQ_TRACE("111尾有部分数据... 首有部分数据... remain>0: %d\n", remain);
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+
+
+
+
+					// TODO FIXME CRITICAL BUG HERE
+					/*
+					if (remain <= 0 || remain > MAX_FRAME_SIZE) {
+                          SSQ_TRACE("CRITICAL: Invalid remain length: %d\\n", remain);
+                          ReleaseMutex(pObj->hMutex);
+                          return -1;
+                    }
+
+                    if (pObj->pQueHeader->readpos + remain > pObj->pQueHeader->bufsize) {
+                          SSQ_TRACE("CRITICAL: Read position + remain overflow: %d + %d > %d\\n",
+                          pObj->pQueHeader->readpos, remain, pObj->pQueHeader->bufsize);
+                          ReleaseMutex(pObj->hMutex);
+                          return -1;
+                    }
+
+					if (pObj->pQueHeader->readpos < 0 || pObj->pQueHeader->readpos >= pObj->pQueHeader->bufsize)
+                    {
+                          SSQ_TRACE("CRITICAL: Corrupt readpos: %d\n", pObj->pQueHeader->readpos);
+                          ReleaseMutex(pObj->hMutex);
+                          return -1;
+                    }
+					if (pObj->pQueData == NULL || pbuf == NULL) {
+                          SSQ_TRACE("CRITICAL: Null pointer in memcpy: pbuf=%p, pQueData=%p\n", pbuf, pObj->pQueData);
+                          ReleaseMutex(pObj->hMutex);
+                          return -1;
+                    }
+					if ((uintptr_t)(pObj->pQueData + pObj->pQueHeader->readpos) < (uintptr_t)pObj->pQueData ||
+                           (uintptr_t)(pObj->pQueData + pObj->pQueHeader->readpos) > (uintptr_t)pObj->pQueData + pObj->pQueHeader->bufsize)
+                    {
+                         SSQ_TRACE("CRITICAL: Out-of-bounds pQueData access.\n");
+                         ReleaseMutex(pObj->hMutex);
+                         return -1;
+                    }
+					*/
+
+					// final check
+					if (pObj->pQueHeader->readpos < 0 ||
+									pObj->pQueHeader->readpos + frameinfo->length > pObj->pQueHeader->bufsize ||
+									frameinfo->length <= 0 || frameinfo->length > MAX_FRAME_SIZE ||
+									pbuf == NULL || pObj->pQueData == NULL)
+					{
+							SSQ_TRACE("CRASH PREVENTED: Invalid memcpy params. readpos=%d, len=%d\n",
+							pObj->pQueHeader->readpos, frameinfo->length);
+							ReleaseMutex(pObj->hMutex);
+							return -1;
+					}
+
+                    // MITIGATION OF OLD CODE
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
 					//memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, remain);	//clear
-					if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					
+					
+					// TODO FIXME CRITICAL BUG HERE
+                    if (frameinfo->length < remain || frameinfo->length > MAX_FRAME_SIZE) {
+                         SSQ_TRACE("CRITICAL: Invalid frame split copy: frame len=%d, remain=%d\n", frameinfo->length, remain);
+						 ReleaseMutex(pObj->hMutex);
+					     return -1;
+                    }
+					// MITIGATION OF OLD CODE
+					//if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+
+
+
+
 					//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 				
 					pObj->pQueHeader->readpos = frameinfo->length-remain;
@@ -721,7 +881,8 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 					else
 					{
 						SSQ_TRACE("111尾有部分数据... 首有部分数据... remain<=0: %d\n", remain);
-						if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+						//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+						if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData, frameinfo->length);
 						//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 						pObj->pQueHeader->readpos = frameinfo->length;
 						pObj->pQueHeader->totalsize -= frameinfo->length;
@@ -746,9 +907,11 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 				if (remain>0)
 				{
 					SSQ_TRACE("222尾有部分数据... 首有部分数据... remain>0: %d\n", remain);
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, remain);
 					//memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, remain);	//clear
-					if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					//if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
 					//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 				
 
@@ -764,7 +927,8 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 				else
 				{
 					SSQ_TRACE("222尾有部分数据... 首有部分数据... remain<=0: %d\n", remain);
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData, frameinfo->length);
 					//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 					pObj->pQueHeader->readpos = frameinfo->length;
 					pObj->pQueHeader->totalsize -= frameinfo->length;
@@ -820,13 +984,16 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 		//SSQ_TRACE("1 REMAIN: %d\n", remain);
 		if (remain>0)
 		{
-			memcpy(pp, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+			//memcpy(pp, pObj->pQueData+pObj->pQueHeader->readpos, remain);
+			SAFE_MEMCPY(pp, pObj->pQueData+pObj->pQueHeader->readpos, remain);
 			//memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, remain);	//clear
 			//SSQ_TRACE("2 read: %d\n", sizeof(SS_BUF_T)-remain);
-			memcpy(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
+			//memcpy(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
+			SAFE_MEMCPY(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
 			//memset(pObj->pQueData, 0x00, sizeof(SS_BUF_T)-remain);	//clear
 
-			memcpy(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
+			//memcpy(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
+			SAFE_MEMCPY(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
 			if (NULL != channelid)		*channelid = bufnode.channelid;
 
 			//if (bufnode.id<1)
@@ -843,7 +1010,8 @@ int		SSQ_GetData(SS_QUEUE_OBJ_T *pObj, unsigned int *channelid, unsigned int *me
 
 			if (NULL!=mediatype)	*mediatype = bufnode.mediatype;
 			//SSQ_TRACE("3 frame length: %d\n", bufnode.frameinfo.length);
-			if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, bufnode.frameinfo.length);
+			//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, bufnode.frameinfo.length);
+			if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData+pObj->pQueHeader->readpos, bufnode.frameinfo.length);
 			//memset(pObj->pQueData+pObj->pQueHeader->readpos, 0x00, bufnode.frameinfo.length);	//clear
 			pObj->pQueHeader->readpos += bufnode.frameinfo.length;
 
@@ -946,13 +1114,15 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 		if (NULL != channelid)		*channelid = pNode->channelid;
 
 
-		memcpy(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
+		//memcpy(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
+		SAFE_MEMCPY(frameinfo, &pNode->frameinfo, sizeof(MEDIA_FRAME_INFO));
 		if ( (*pOffset + pNode->frameinfo.length+sizeof(SS_BUF_T)) <= pObj->pQueHeader->bufsize)
 		{
 			//从头到尾读
 			*pOffset += sizeof(SS_BUF_T);
 
-			if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+*pOffset, frameinfo->length);
+			//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData+*pOffset, frameinfo->length);
+			if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData+*pOffset, frameinfo->length);
 			*pOffset += frameinfo->length;
 			*pTotalSize -= (frameinfo->length+sizeof(SS_BUF_T));
 
@@ -975,8 +1145,10 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 				remain = pObj->pQueHeader->bufsize - *pOffset;
 				if (remain>0)
 				{
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, remain);
-					if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData + *pOffset, remain);
+					//if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
 
 					*pOffset = frameinfo->length-remain;
 					*pTotalSize -= (frameinfo->length+sizeof(SS_BUF_T));
@@ -990,7 +1162,8 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 					else
 					{
 						SSQ_TRACE("[SSQ_GetDataByPosition]尾有部分数据... 首有部分数据... remain<=0: %d\n", remain);
-						if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+						//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+						if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData, frameinfo->length);
 						//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 						*pOffset = frameinfo->length;
 						*pTotalSize -= (frameinfo->length+sizeof(SS_BUF_T));
@@ -1006,8 +1179,10 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 				if (remain>0)
 				{
 					SSQ_TRACE("[SSQ_GetDataByPosition]222尾有部分数据... 首有部分数据... remain>0: %d\n", remain);
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, remain);
-					if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData + *pOffset, remain);
+					//if (NULL!=pbuf)	memcpy(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf+remain, pObj->pQueData, frameinfo->length-remain);
 				
 					*pOffset = frameinfo->length-remain;
 					*pTotalSize -= (frameinfo->length);
@@ -1015,7 +1190,8 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 				else
 				{
 					SSQ_TRACE("[SSQ_GetDataByPosition]222尾有部分数据... 首有部分数据... remain<=0: %d\n", remain);
-					if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+					//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData, frameinfo->length);
+					if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData, frameinfo->length);
 					//memset(pObj->pQueData, 0x00, frameinfo->length-remain);	//clear
 					*pOffset = frameinfo->length;
 				}
@@ -1041,11 +1217,14 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 		SSQ_TRACE("[SSQ_GetDataByPosition]1 REMAIN: %d\n", remain);
 		if (remain>0)
 		{
-			memcpy(pp, pObj->pQueData + *pOffset, remain);
+			//memcpy(pp, pObj->pQueData + *pOffset, remain);
+			SAFE_MEMCPY(pp, pObj->pQueData + *pOffset, remain);
 			SSQ_TRACE("[SSQ_GetDataByPosition]2 read: %d\n", sizeof(SS_BUF_T)-remain);
-			memcpy(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
+			//memcpy(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
+			SAFE_MEMCPY(pp+remain, pObj->pQueData, sizeof(SS_BUF_T)-remain);
 
-			memcpy(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
+			//memcpy(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
+			SAFE_MEMCPY(frameinfo, &bufnode.frameinfo, sizeof(MEDIA_FRAME_INFO));
 			if (NULL != channelid)		*channelid = bufnode.channelid;
 
 			if (bufnode.flag	!= BUF_QUE_FLAG)
@@ -1061,7 +1240,8 @@ int		SSQ_GetDataByPosition(SS_QUEUE_OBJ_T *pObj, unsigned int position, unsigned
 
 			if (NULL!=mediatype)	*mediatype = bufnode.mediatype;
 			SSQ_TRACE("[SSQ_GetDataByPosition]3 frame length: %d\n", bufnode.frameinfo.length);
-			if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, bufnode.frameinfo.length);
+			//if (NULL!=pbuf)	memcpy(pbuf, pObj->pQueData + *pOffset, bufnode.frameinfo.length);
+			if (NULL!=pbuf) SAFE_MEMCPY(pbuf, pObj->pQueData + *pOffset, bufnode.frameinfo.length);
 			*pOffset += bufnode.frameinfo.length;
 			*pTotalSize -= (frameinfo->length+sizeof(SS_BUF_T));
 

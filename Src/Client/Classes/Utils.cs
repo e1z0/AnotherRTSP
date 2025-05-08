@@ -37,7 +37,7 @@ namespace AnotherRTSP.Classes
 
 
 
-            Application.DoEvents(); 
+            Application.DoEvents();
 
             Application.Exit();
         }

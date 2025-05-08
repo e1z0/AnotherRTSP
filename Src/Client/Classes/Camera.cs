@@ -25,8 +25,8 @@ namespace AnotherRTSP
         public int ChannelID;
         private PlayerSdk.MediaSourceCallBack callback;
         private PlayerSdk.RENDER_FORMAT RENDER_FORMAT = PlayerSdk.RENDER_FORMAT.DISPLAY_FORMAT_RGB24_GDI;
-        private bool isTCP = true;
-        private bool isHardEncode = false;
+        //private bool isTCP = true;
+        //private bool isHardEncode = false;
         private int streamCache = 3;
         private bool FullScreen = false;
 
@@ -106,10 +106,10 @@ namespace AnotherRTSP
                 Config.Url,
                 this.Handle,
                 RENDER_FORMAT,
-                isTCP ? 1 : 0,
+                config.isTCP ? 1 : 0,
                 "", "", callback,
                 IntPtr.Zero,
-                isHardEncode
+                config.HardDecode
             );
 
             if (ChannelID > 0)
@@ -206,9 +206,41 @@ namespace AnotherRTSP
             }
         }
 
+
         private int MediaCallback(int _channelId, IntPtr _channelPtr, int _frameType, IntPtr pBuf, ref PlayerSdk.EASY_FRAME_INFO _frameInfo)
         {
-            return 0;
+            try
+            {
+                if (_channelId > 0 && pBuf == IntPtr.Zero || _frameInfo.length == 0)
+                {
+                    Logger.WriteLog("[RTSP] Skipping empty or null frame from channel {channelId}");
+                    return 0;
+                }
+
+                if (_frameInfo.length > 1920 * 1080 * 4)
+                {
+                    Logger.WriteLog("[RTSP] Suspicious frame size: {frameInfo.length} bytes. Skipped.");
+                    return 0;
+                }
+
+                //byte[] buffer = new byte[frameInfo.length];
+                //Marshal.Copy(pBuf, buffer, 0, (int)frameInfo.length);
+
+                // Your frame processing here...
+
+                return 0;
+            }
+            catch (AccessViolationException ex)
+            {
+                Logger.WriteLog("[RTSP] AccessViolation in channel {channelId}: {ex.Message}");
+                // Do not rethrow!
+                return -1;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog("[RTSP] Exception in callback: {ex}");
+                return -1;
+            }
         }
 
         private void CameraMouseDown(object sender, MouseEventArgs e)
@@ -223,10 +255,10 @@ namespace AnotherRTSP
                         form.Focus();
                     }
                 }
-                    ReleaseCapture();
-                    SendMessage(this.Handle, 0xA1, HTCAPTION, 0);
+                ReleaseCapture();
+                SendMessage(this.Handle, 0xA1, HTCAPTION, 0);
             }
-   
+
         }
 
         private void CameraMouseMove(object sender, MouseEventArgs e)
@@ -304,7 +336,7 @@ namespace AnotherRTSP
 
         private void CameraMouseEnter(object sender, EventArgs e)
         {
-            
+
             if (!YmlSettings.Data.AdvancedSettings.StaticCameraCaption && !YmlSettings.Data.AdvancedSettings.DisableCameraCaptions)
             {
                 camLabel.Visible = true;
@@ -317,7 +349,7 @@ namespace AnotherRTSP
                 };
                 fadeTimer.Start();
             }
-             
+
         }
 
         public void UpdateConfigFromForm()
@@ -366,7 +398,7 @@ namespace AnotherRTSP
             if (item != null)
             {
                 YmlSettings.AddCamera(item);
-                if (!item.Disabled) 
+                if (!item.Disabled)
                     Camera.EnableCamera(item);
                 TrayIconManager.PopulateCameraList();
             }
@@ -382,14 +414,14 @@ namespace AnotherRTSP
         // win32 api call to resize and move windows
         protected override void WndProc(ref Message m)
         {
-            
+
             // handle left mouse button double click
             if (m.Msg == WM_LBUTTONDBLCLK)
             {
                 CameraDoubleClick(this, EventArgs.Empty);
                 return;
             }
-            
+
             // handle resize and move
             if (m.Msg == WM_GETMINMAXINFO)
             {

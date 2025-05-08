@@ -222,7 +222,7 @@ namespace AnotherRTSP
 
         private void resetPositionsBtn_Click(object sender, EventArgs e)
         {
-            foreach (CameraItem localItem in YmlSettings.Data.Cameras) 
+            foreach (CameraItem localItem in YmlSettings.Data.Cameras)
             {
                 CameraItem item = localItem;
                 Camera.ResetCamera(item);
@@ -235,12 +235,12 @@ namespace AnotherRTSP
                 }
                 else if (form.Name == "LogForm")
                 {
-                    Win32Func.MoveWindow(form.Handle,0,0,616,354,true);
+                    Win32Func.MoveWindow(form.Handle, 0, 0, 616, 354, true);
                 }
-                
+
             }
             MessageBox.Show("Resize done!");
-             
+
         }
 
         private void SettingsForm_Leave(object sender, EventArgs e)
@@ -290,7 +290,7 @@ namespace AnotherRTSP
             }
             else
             {
-                MessageBox.Show("No item selected","Info",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+                MessageBox.Show("No item selected", "Info", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

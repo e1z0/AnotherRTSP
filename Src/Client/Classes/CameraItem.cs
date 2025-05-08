@@ -14,6 +14,8 @@ namespace AnotherRTSP.Classes
         public int WHeight { get; set; }
         public int WX { get; set; }
         public int WY { get; set; }
+        public bool isTCP { get; set; }
+        public bool HardDecode { get; set; }
 
         public CameraItem()
         {
@@ -24,6 +26,8 @@ namespace AnotherRTSP.Classes
             WHeight = 200;
             WX = 100;
             WY = 100;
+            isTCP = true;
+            HardDecode = false;
         }
     }
 }

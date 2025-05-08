@@ -7,6 +7,7 @@
 */
 #ifndef __SHARE_MEMORY_QUEUE_H__
 #define __SHARE_MEMORY_QUEUE_H__
+#define MAX_FRAME_SIZE (1920*1080*4)  // ~8MB for safety
 
 #ifdef _WIN32
 #include <winsock2.h>

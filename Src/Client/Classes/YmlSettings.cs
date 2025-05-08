@@ -82,7 +82,7 @@ namespace AnotherRTSP.Classes
             AllCamerasWindowsOnTop = false;
             ResizeWindowBy = 5;
         }
-    } 
+    }
 
     public class YmlSettings
     {
@@ -91,12 +91,12 @@ namespace AnotherRTSP.Classes
         public static bool LogWindowRunning = false;
         public static bool IsInit = false;
         public static int LedsCount;
-        
+
         // === SETTINGS PROPERTIES ===
         public bool MqttEnabled { get; set; }
         public bool FirstRun { get; set; }
         public bool Logging { get; set; }
-        public string LogPath { get; set; } 
+        public string LogPath { get; set; }
         public bool LogWindow { get; set; }
         public int WindowWidth { get; set; }
         public int WindowHeight { get; set; }
@@ -113,7 +113,7 @@ namespace AnotherRTSP.Classes
 
         public static MqttStack MqttSettings = new MqttStack();
         public static AdvancedSettings Advanced = new AdvancedSettings();
-      
+
 
         public MqttStack MQTT { get; set; }
         public AdvancedSettings AdvancedSettings { get; set; }
@@ -201,7 +201,7 @@ namespace AnotherRTSP.Classes
             catch (Exception ex)
             {
                 //Logger.WriteLog("Error loading settings: " + ex.Message);
-                System.Windows.Forms.MessageBox.Show("Error loading settings: "+ex.Message);
+                System.Windows.Forms.MessageBox.Show("Error loading settings: " + ex.Message);
                 Data = new YmlSettings();
             }
         }

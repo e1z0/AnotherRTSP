@@ -133,6 +133,9 @@
     <Compile Include="Forms\CameraEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\CameraEditorForm.Designer.cs">
+      <DependentUpon>CameraEditorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MqttRulesForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -189,6 +192,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\AboutForm.resx">
       <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\CameraEditorForm.resx">
+      <DependentUpon>CameraEditorForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MqttRulesForm.resx">
       <DependentUpon>MqttRulesForm.cs</DependentUpon>
