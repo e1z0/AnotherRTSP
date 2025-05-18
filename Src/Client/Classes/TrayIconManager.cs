@@ -112,8 +112,11 @@ namespace AnotherRTSP.Classes
                     CheckOnClick = true
                 };
 
+                var resetCam = new ToolStripMenuItem("Reset") { Enabled = !item.Disabled };
+                resetCam.Click += (s, e) => Camera.ResetCamera(item);
+
                 var resetItem = new ToolStripMenuItem("Reset position") { Enabled = !item.Disabled };
-                resetItem.Click += (s, e) => Camera.ResetCamera(item);
+                resetItem.Click += (s, e) => Camera.ResetPosition(item);
 
                 var recordItem = new ToolStripMenuItem("Record") { Enabled = !item.Disabled, CheckOnClick = true };
                 recordItem.Checked = false;
@@ -123,6 +126,7 @@ namespace AnotherRTSP.Classes
                 soundItem.Checked = false;
                 soundItem.Click += (s, e) => Camera.ToggleSound(item, soundItem);
 
+                camMenu.DropDownItems.Add(resetCam);
                 camMenu.DropDownItems.Add(resetItem);
                 camMenu.DropDownItems.Add(recordItem);
                 camMenu.DropDownItems.Add(soundItem);

@@ -161,6 +161,13 @@ namespace AnotherRTSP
 
         public static void ResetCamera(CameraItem item)
         {
+            DisableCamera(item);
+            System.Threading.Thread.Sleep(500);
+            EnableCamera(item);
+        }
+
+        public static void ResetPosition(CameraItem item)
+        {
             var cam = AllCameras.FirstOrDefault(c => c.Config == item);
             if (cam != null)
             {
