@@ -135,16 +135,27 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 SetupWindowTitle=Setup - {#MyAppName} {#MyAppVersion}
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
 Source: "C:\Projects\AnotherRTSP\Bin\AnotherRTSP.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Projects\AnotherRTSP\Bin\Lib\*"; DestDir: "{app}\Lib"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Projects\AnotherRTSP\Bin\Sounds\*"; DestDir: "{app}\Sounds"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Projects\AnotherRTSP\Bin\AnotherRTSP.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Projects\AnotherRTSP\Bin\EasyPlayer-RTSP.NetSDK.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Projects\AnotherRTSP\Bin\M2Mqtt.Net.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Projects\AnotherRTSP\dist\AnotherRTSP.ini"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\YamlDotNet.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\NLua.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\msvcr110.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\msvcr100.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\lua52.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Projects\AnotherRTSP\Bin\KeraLua.dll"; DestDir: "{app}"; Flags: ignoreversion
+; config
+Source: "C:\Projects\AnotherRTSP\dist\config.yml"; DestDir: "{app}"; Flags: ignoreversion confirmoverwrite uninsneveruninstall
+; MS Redistributable packages
+Source: "C:\Projects\AnotherRTSP\redist\msvc2010.exe"; DestDir: {tmp}; Flags: deleteafterinstall
+Source: "C:\Projects\AnotherRTSP\redist\msvc2012.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -154,7 +165,12 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Fil
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{tmp}\msvc2010.exe"; Parameters: "/q /norestart"; StatusMsg: "Installing VC++ 2010 redistributable..."; Flags: runascurrentuser shellexec waituntilterminated
+Filename: "{tmp}\msvc2012.exe"; Parameters: "/q /norestart"; StatusMsg: "Installing VC++ 2012 redistributable..."; Flags: runascurrentuser shellexec waituntilterminated
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}"
+;Type: filesandordirs; Name: "{app}\Lib"
+Type: files; Name: "{app}\*.dmp"
+Type: files; Name: "{app}\*.log"
+
 

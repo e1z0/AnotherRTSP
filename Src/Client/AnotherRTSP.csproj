@@ -283,7 +283,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>xcopy /y "$(SolutionDir)Solution Items\Lib" $(TargetDir)Lib\</PreBuildEvent>
+    <PreBuildEvent>xcopy /y "$(SolutionDir)Solution Items\Lib" $(TargetDir)Lib\
+xcopy /y "$(SolutionDir)Solution Items\Sounds" $(TargetDir)Sounds\</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>copy /y "$(SolutionDir)bin\AnotherRTSP.exe" $(SolutionDir)..\Bin\
@@ -293,7 +294,9 @@ copy /y "$(SolutionDir)bin\lua52.dll" $(SolutionDir)..\Bin\
 copy /y "$(SolutionDir)bin\NLua.dll" $(SolutionDir)..\Bin\
 copy /y "$(SolutionDir)bin\msvcr110.dll" $(SolutionDir)..\Bin\
 copy /y "$(SolutionDir)bin\msvcr100.dll" $(SolutionDir)..\Bin\
-xcopy /s /y "C:\Projects\AnotherRTSP\Src\packages\NLua.1.3.0.0\lib\native\x86\*.*" "$(TargetDir)"</PostBuildEvent>
+xcopy /s /y "C:\Projects\AnotherRTSP\Src\packages\NLua.1.3.0.0\lib\native\x86\*.*" "$(TargetDir)"
+xcopy /y /E /I "$(SolutionDir)bin\Lib" $(SolutionDir)..\Bin\Lib
+xcopy /y /E /I "$(SolutionDir)bin\Sounds" $(SolutionDir)..\Bin\Sounds</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
