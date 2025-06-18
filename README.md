@@ -52,7 +52,7 @@ Currently supported features list:
 - [x] Ultra-low latency RTSP player;
 - [x] Super device compatibility and customizability;
 - [x] Perfectly supports multi-window and multi-instance playback;
-- [ ] Support RTSP TCP/UDP mode switching;
+- [X] Support RTSP TCP/UDP mode switching;
 - [ ] Supports real-time setting of the playback buffer and mature low-latency frame tracking technology;
 - [x] Turn on the playback function in seconds;
 - [x] Support custom playback layout;
@@ -93,3 +93,6 @@ For details, see [LICENSE](./LICENSE).
 * EasyPlayerRTSP Libraries https://github.com/tsingsee/EasyPlayer-RTSP-Win
 * Paho MQTT m2mqtt 4.3.0.0 (2017.05.20)
 * Tiny-JSON v1.2.0 https://github.com/gering/Tiny-JSON
+* YamlDotNet v4.2.1 https://github.com/aaubry/YamlDotNet
+* NLua v1.3.0 https://github.com/NLua/NLua
+

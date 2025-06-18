@@ -1,6 +1,6 @@
 ﻿/*
  * Copyright (c) 2024-2025 e1z0. All Rights Reserved.
- * Licensed under MIT license.
+ * Licensed under the Business Source License 1.1.
  */
 
 using System;

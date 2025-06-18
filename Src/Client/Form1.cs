@@ -1,4 +1,10 @@
-﻿using EasyPlayerNetSDK;
+﻿/*
+ * Copyright (c) 2024-2025 e1z0. All Rights Reserved.
+ * Licensed under the Business Source License 1.1.
+ */
+
+
+using EasyPlayerNetSDK;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

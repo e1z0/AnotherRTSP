@@ -1,6 +1,6 @@
 ﻿/*
  * Copyright (c) 2024 e1z0. All Rights Reserved.
- * Licensed under MIT license.
+ * Licensed under the Business Source License 1.1.
  */
 using System;
 using System.Drawing;

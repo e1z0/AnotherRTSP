@@ -1,7 +1,8 @@
 ﻿/*
- * Copyright (c) 2024 e1z0. All Rights Reserved.
- * Licensed under MIT license.
+ * Copyright (c) 2024-2025 e1z0. All Rights Reserved.
+ * Licensed under the Business Source License 1.1.
  */
+
 
 using System;
 using System.Text;
