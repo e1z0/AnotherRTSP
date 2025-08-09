@@ -200,7 +200,6 @@ namespace AnotherRTSP.Classes
             }
             catch (Exception ex)
             {
-                //Logger.WriteLog("Error loading settings: " + ex.Message);
                 System.Windows.Forms.MessageBox.Show("Error loading settings: " + ex.Message);
                 Data = new YmlSettings();
             }
@@ -213,14 +212,16 @@ namespace AnotherRTSP.Classes
             {
                 using (var writer = new StreamWriter(ConfigFilePath))
                 {
-                    var serializer = new Serializer();
+                    var serializer = new SerializerBuilder()
+                        .EmitDefaults()              // <- write false/0/null too
+                        .Build();
+
                     serializer.Serialize(writer, Data);
                 }
             }
             catch (Exception ex)
             {
                 System.Windows.Forms.MessageBox.Show("Error saving settings: " + ex.Message);
-                //Logger.WriteLog("Error saving settings: " + ex.Message);
             }
         }
     }

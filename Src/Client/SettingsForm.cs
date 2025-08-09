@@ -72,12 +72,20 @@ namespace AnotherRTSP
                 YmlSettings.Data.MQTT.ClientID = clientidtextbox.Text;
 
             // advanced tab
-            YmlSettings.Advanced.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
-            YmlSettings.Advanced.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
-            YmlSettings.Advanced.FocusAllWindowsOnClick = allWindowsFocus.Checked;
-            YmlSettings.Advanced.StaticCameraCaption = staticCameraCaptioncheckBox1.Checked;
-            YmlSettings.Advanced.DisableCameraCaptions = disableCameraCaptionCheckbox.Checked;
-            YmlSettings.Advanced.AllCamerasWindowsOnTop = allCamerasOntopCheckbox.Checked;
+            YmlSettings.Data.AdvancedSettings.LedsWindowOnTop = checkBoxLedsOnTop.Checked;
+            YmlSettings.Data.AdvancedSettings.LedsSoundAlert = checkBoxLedsAlertSounds.Checked;
+            YmlSettings.Data.AdvancedSettings.FocusAllWindowsOnClick = allWindowsFocus.Checked;
+            YmlSettings.Data.AdvancedSettings.StaticCameraCaption = staticCameraCaptioncheckBox1.Checked;
+            YmlSettings.Data.AdvancedSettings.DisableCameraCaptions = disableCameraCaptionCheckbox.Checked;
+            YmlSettings.Data.AdvancedSettings.AllCamerasWindowsOnTop = allCamerasOntopCheckbox.Checked;
+
+            foreach (CameraItem camItem in YmlSettings.Data.Cameras) {
+                Camera.CameraTopMost(camItem,allCamerasOntopCheckbox.Checked);
+            }
+
+           
+            YmlSettings.Save();
+
         }
 
         private void loadSettings()
@@ -201,47 +209,23 @@ namespace AnotherRTSP
             {
                 MessageBox.Show("Error during backup:\n" + ex.Message, "Backup Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            /*using (SaveFileDialog dialog = new SaveFileDialog())
-            {
-                dialog.Filter = "ini files (*.ini)|*.ini|All files (*.*)|*.*";
-                dialog.FileName = "settings.ini";
-                dialog.FilterIndex = 2;
-                dialog.RestoreDirectory = true;
-
-                if (dialog.ShowDialog() == DialogResult.OK)
-                {
-                    string IniPath = new FileInfo(Assembly.GetExecutingAssembly().GetName().Name + ".ini").FullName;
-                    // Save data
-                    var currentfile = File.ReadAllText(IniPath);
-                    System.IO.StreamWriter file = new System.IO.StreamWriter(dialog.FileName.ToString());
-                    file.Write(currentfile);
-                    file.Close();
-
-                }
-            }*/
         }
 
         private void resetPositionsBtn_Click(object sender, EventArgs e)
         {
-            foreach (CameraItem localItem in YmlSettings.Data.Cameras)
-            {
-                CameraItem item = localItem;
-                Camera.ResetCamera(item);
-            }
+            /*
             foreach (Form form in Application.OpenForms)
             {
-                if (form.Name == "Leds")
-                {
-                    Win32Func.MoveWindow(form.Handle, 0, 0, form.Width, form.Height, true);
-                }
-                else if (form.Name == "LogForm")
-                {
-                    Win32Func.MoveWindow(form.Handle, 0, 0, 616, 354, true);
-                }
+                Win32Func.MoveWindow(form.Handle, 0, 0, form.Width, form.Height, true);
+            }*/
 
+            foreach (CameraItem localItem in YmlSettings.Data.Cameras)
+            {
+                Camera.ResetPosition(localItem);
             }
-            MessageBox.Show("Resize done!");
 
+            MessageBox.Show("Resize done!");
+           
         }
 
         private void SettingsForm_Leave(object sender, EventArgs e)
@@ -321,8 +305,9 @@ namespace AnotherRTSP
 
         private void button2_Click(object sender, EventArgs e)
         {
-            //Classes.TrayIconManager.BalloonTip("title", "text", ToolTipIcon.Info, 3000);
-            //NotificationForm.ShowNotification("Motion Detected", "Camera 1 detected movement!", 5000);
+            // just for testing :)
+            // Classes.TrayIconManager.BalloonTip("title", "text", ToolTipIcon.Info, 3000);
+            // NotificationForm.ShowNotification("Motion Detected", "Camera 1 detected movement!", 5000);
             SoundManager.PlaySound("battle1_");
 
         }

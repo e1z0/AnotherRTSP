@@ -31,7 +31,7 @@ namespace AnotherRTSP.Classes
             WHeight = 200;
             WX = 100;
             WY = 100;
-            isTCP = true;
+            //isTCP = true;
             HardDecode = false;
         }
     }

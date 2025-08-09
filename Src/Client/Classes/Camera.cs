@@ -100,13 +100,12 @@ namespace AnotherRTSP
             camLabel.BringToFront();
 
             AllCameras.Add(this);
-
             callback = new PlayerSdk.MediaSourceCallBack(MediaCallback);
             ChannelID = PlayerSdk.EasyPlayer_OpenStream(
                 Config.Url,
                 this.Handle,
                 RENDER_FORMAT,
-                config.isTCP ? 1 : 0,
+                Config.isTCP ? 1 : 0,
                 "", "", callback,
                 IntPtr.Zero,
                 config.HardDecode
@@ -178,6 +177,15 @@ namespace AnotherRTSP
                 cam.Config.WWidth = 300;
                 cam.Config.WHeight = 200;
             }
+        }
+
+        public static void CameraTopMost(CameraItem item, bool val)
+        {
+                 var cam = AllCameras.FirstOrDefault(c => c.Config == item);
+                 if (cam != null)
+                 {
+                     cam.TopMost = val;
+                 }
         }
 
         public static void ToggleRecording(CameraItem item, ToolStripMenuItem menu)
@@ -310,35 +318,6 @@ namespace AnotherRTSP
                 if (Utils.DetectInvalidResolution())
                     PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
             }
-
-            /*
-                if (this.WindowState == FormWindowState.Normal)
-                {
-                    UpdateConfigFromForm();
-                    this.WindowState = FormWindowState.Maximized;
-                    if (Utils.DetectInvalidResolution())
-                        PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 0);
-                    
-                    new System.Threading.Thread(() =>
-                    {
-                        System.Threading.Thread.Sleep(500);
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            this.Dock = DockStyle.Fill;
-                            this.Invalidate();
-                        });
-                    }).Start();
-                     
-                }
-                else
-                {
-                    this.WindowState = FormWindowState.Normal;
-                    this.Size = new Size(Config.WWidth, Config.WHeight);
-                    this.Location = new Point(Config.WX, Config.WY);
-                    if (Utils.DetectInvalidResolution())
-                        PlayerSdk.EasyPlayer_SetShownToScale(ChannelID, 1);
-                }
-            */
         }
 
         private void CameraMouseEnter(object sender, EventArgs e)
